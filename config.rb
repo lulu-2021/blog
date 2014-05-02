@@ -5,7 +5,8 @@
 Time.zone = "Australia/Sydney"
 
 activate :blog do |blog|
-  # blog.prefix = "posts"
+  blog.prefix = "blog"
+  
   blog.permalink = ":title"
   blog.sources = ":year-:month-:day-:title.html"
   blog.layout = "posts"
