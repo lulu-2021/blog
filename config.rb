@@ -50,6 +50,9 @@ page "/feed.xml", :layout => false, :directory_index => false
 # Page options, layouts, aliases and proxies
 ###
 
+activate :relative_assets
+set :relative_links, true
+
 # Per-page layout changes:
 # 
 # With no layout
