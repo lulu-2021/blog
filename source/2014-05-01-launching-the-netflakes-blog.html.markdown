@@ -12,7 +12,7 @@ Lately I have been working with the Azure platform a fair bit and with the recen
 
 Prior to this I have used powershell to interact with the Windows Azure Rest API, but this new set of Client Libraries is so much more fun.
 
-My initial solution is available on my [github.com/netflakes](https://https://github.com/netflakes/AzureManagement) account. Sofar I have a project that gathers stats on the cloud services and virtual machines and can also download sets of RDP files for all or for Cloud services.
+My initial solution is available on my [github.com/netflakes](https://github.com/netflakes/AzureManagement) account. Sofar I have a project that gathers stats on the cloud services and virtual machines and can also download sets of RDP files for all or for Cloud services.
 
 Following my passion for TDD I have a set of unittests for each method and this will grow. Logging and configuration is isolated from the main code via DI. There is a command line app that will be able to call each method in the class library. Following on from this I intend to add different output/storage mechanisms also via DI that can be plugged in when needed.
 
