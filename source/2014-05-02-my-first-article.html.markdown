@@ -4,7 +4,7 @@ date: 2014-05-02 10:26 UTC
 tags:
 ---
 
-This is my first article duh..
+This is me just testing this new shiny blog built with middleman and deployed to github...
 
 	public bool GetFirstUser(int userId)
 	{
@@ -16,4 +16,4 @@ This is my first article duh..
 		return null;
 	}
 
-Ok let's see if we ended up having code here..
+Ok let's see if we ended up having code here...
