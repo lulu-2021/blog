@@ -26,7 +26,7 @@ activate :blog do |blog|
   # blog.page_link = "page/:num"
 end
 
-page "/61745462/index.html", :layout => false, :directory_index => false
+#page "/61745462/index.html", :layout => false, :directory_index => false
 
 activate :directory_indexes
 
