@@ -2,7 +2,7 @@
 # Blog settings
 ###
 
-# Time.zone = "UTC"
+Time.zone = "Australia/Sydney"
 
 activate :blog do |blog|
   # blog.prefix = "posts"
