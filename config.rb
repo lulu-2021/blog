@@ -1,8 +1,9 @@
 ###
 # Blog settings
 ###
-
-Time.zone = "Australia/Sydney"
+require 'tzinfo'
+Time.zone = "EST"
+#Time.zone = "Australia/Sydney"
 
 activate :blog do |blog|
   #blog.prefix = "blog"

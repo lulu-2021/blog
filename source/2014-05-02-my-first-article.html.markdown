@@ -1,6 +1,6 @@
 ---
 title: My First Article
-date: 2014-05-02 10:26 UTC
+date: 2014-05-02 19:26 EST
 tags:
 ---
 
