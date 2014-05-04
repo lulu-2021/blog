@@ -5,6 +5,9 @@
   <time datetime="<%= current_page.date.strftime('%Y-%m-%d') %>" pubdate><%= current_page.date.strftime('%b %e, %Y') %></time>
   <article>
     <%= yield %>
+	
+  	<%= disqus %>
+	
   </article>
   <% if current_page.tags.any? %>
     <div class="article_footer">
