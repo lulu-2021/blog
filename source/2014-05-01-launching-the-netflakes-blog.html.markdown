@@ -1,7 +1,7 @@
 ---
 title: launching the netflakes blog
 date: 2014-05-01 20:00 EST
-tags:
+tags: azure, azure-management-client-library
 ---
 
 ## Launching my new code blog on github

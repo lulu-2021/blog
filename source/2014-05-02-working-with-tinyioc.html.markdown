@@ -1,7 +1,7 @@
 ---
 title: working with tinyioc
 date: 2014-05-02 23:54 EST
-tags:
+tags: c#, inversion-of-control, dependency-injection
 ---
 
 ## Inversion of Control with TinyIoC

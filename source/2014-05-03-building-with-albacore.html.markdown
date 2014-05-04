@@ -1,7 +1,7 @@
 ---
 title: building c# with albacore
 date: 2014-05-03 09:30 EST
-tags:
+tags: c#, ruby, albacore, build
 ---
 
 
