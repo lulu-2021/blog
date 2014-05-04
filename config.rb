@@ -28,6 +28,10 @@ activate :blog do |blog|
   # blog.page_link = "page/:num"
 end
 
+activate :disqus do |d|
+  d.shortname = "code-netflakes"
+end
+
 #page "/61745462/index.html", :layout => false, :directory_index => false
 
 activate :directory_indexes
