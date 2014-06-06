@@ -10,3 +10,5 @@ gem "middleman-disqus"
 # For feed.xml.builder
 gem "builder", "~> 3.0"
 
+gem "execjs"
+gem "therubyracer"
