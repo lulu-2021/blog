@@ -1,0 +1,25 @@
+
+Some notes on how to use the middleman blog
+
+# - To create an article:
+
+middleman article ARTICLENAME
+
+# - This adds a new blog article to the source folder
+
+# - Edit this in markdown...
+
+# - Then check the source into the GIT master branch:  (the source only!)
+
+git status
+git add .
+git commit -am "with a relevant message"
+git push origin master
+
+# - Then build and publish
+
+rake build
+
+rake publish
+
+# - the publish script checks the build into the gh-pages branch which is what becomes the actual static site!
