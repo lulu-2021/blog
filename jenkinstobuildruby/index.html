@@ -35,11 +35,13 @@
   <article>
     <h2 id="jenkins-continuous-integration-server-and-ruby">Jenkins, Continuous Integration Server and Ruby</h2>
 
-<h4 id="jenkins-is-really-easy-to-install-on-a-vps-and-the-configuration-of-build-a-ruby-app-is-a-snap">Jenkins is really easy to install on a vps and the configuration of build a ruby app is a snap</h4>
+<h4 id="jenkins-is-really-easy-to-install-on-a-vps-and-the-configuration-of-building-ruby-is-a-snap">Jenkins is really easy to install on a vps and the configuration of building ruby is a snap</h4>
 
 <p>I have recently started my own business, building a Web Application with Ruby and Rails. I use Capistrano <a href="ttp://capistranorb.com/">capistrano</a> for automated build deployment. Since I develop using a TDD approach, I was keen to have a continuous deployment process to the cloud up and running from the start.</p>
 
-<p>In my last job I used Windows Azure extensively and for comfort reasons decided to fire up a few Ubuntu virtual machines for a continuous build and deployment process. I have three virtual machines, one running Jenkins <a href="http://jenkins-ci.org/">jenkins</a> as a build server, one application server and one database server. I use <a href="https://bitbucket.org/">bitbucket</a> for Git source control. The basic flow is each time code is deployed to the master branch in Git, this triggers a build in Jenkins and in turn all unit and integration tests are run. On succes a second project in Jenkins does a full capistrano based automatic deployment to the Azure environment. This gives me a daily fresh build of all the work done.</p>
+<p>In my last job I used Windows Azure extensively and for comfort reasons decided to fire up a few Ubuntu virtual machines for a continuous build and deployment process. I have three virtual machines, one running Jenkins <a href="http://jenkins-ci.org/">jenkins</a> as a build server, one application server and one database server. I use <a href="https://bitbucket.org/">bitbucket</a> for Git source control. </p>
+
+<p>The basic flow - each time code is deployed to the master branch in Git, this triggers a build in Jenkins and in turn all unit and integration tests are run. On succes a second project in Jenkins does a full capistrano based automatic deployment to the Azure environment. This gives me a daily fresh build of all the work done.</p>
 
 <p>I don't check in yml configuration files such as the database.yml and other such files into source control. They are just symlinked to shared configuration folders both in my local dev and in the deployment environments. For the Jenkins build process a simple shell script generates these files on the fly during the build process. </p>
 
@@ -49,7 +51,7 @@
 	Run the build in a RVM-managed environment (simple add your ruby/gemset here!)
 </code></pre>
 
-<p>The example below has sensitive bits overwritten with ##..</p>
+<p>The shell script below is the meat of the build (sensitive bits overwritten with ##..)</p>
 
 <pre><code>#!/bin/bash -x
 
