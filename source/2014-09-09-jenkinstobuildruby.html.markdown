@@ -1,7 +1,7 @@
 ---
 title: JenkinsToBuildRuby
 date: 2014-09-09 19:42 EST
-tags: ruby jenkins continuous integration
+tags: ruby, jenkins, continuous integration
 ---
 
 ## Jenkins, Continuous Integration Server and Ruby

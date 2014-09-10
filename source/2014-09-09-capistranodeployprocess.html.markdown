@@ -1,7 +1,7 @@
 ---
 title: CapistranoDeployProcess
 date: 2014-09-09 20:59 EST
-tags: ruby capistrano unicorn
+tags: ruby, capistrano, unicorn
 ---
 
 ## Capistrano, Automatic Deployment to Staging and Prod
