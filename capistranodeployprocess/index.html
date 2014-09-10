@@ -1,0 +1,276 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv='X-UA-Compatible' content='IE=edge;chrome=1' />
+
+    <title>CapistranoDeployProcess</title>
+	
+    <link href='http://fonts.googleapis.com/css?family=Droid+Serif:400,700|Open+Sans:400,700' rel='stylesheet' type='text/css'>
+    <link href="../stylesheets/all.css?1410311636" rel="stylesheet" type="text/css" />
+    <script src="../javascripts/all.js?1410311636" type="text/javascript"></script>
+	
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link rel="alternate" type="application/rss+xml"  href="/feed.xml" title="Netflakes - Steve Forkin">
+
+  </head>
+  <body>
+
+    <div class="wrapper">
+
+      <header>
+        <h1><a href="/">Netflakes</a></h1>
+		<h4>Ruby is Fun..</h4>
+        by <a href="mailto:steve@netflakes.org">Steve Forkin</a>
+      </header>
+
+      <section>
+          <h2>
+    <a href="/capistranodeployprocess/">CapistranoDeployProcess</a>
+  </h2>
+  <time datetime="2014-09-09" pubdate>Sep  9, 2014</time>
+  <article>
+    <h2 id="capistrano-automatic-deployment-to-staging-and-prod">Capistrano, Automatic Deployment to Staging and Prod</h2>
+
+<h4 id="capistrano-is-the-de-facto-ruby-deployment-process-toolbox">Capistrano is the de-facto ruby deployment process toolbox.</h4>
+
+<p>I use RVM extensively for all my ruby and rails projects and also use it in my staging and deployment environments. Capistrano works well with it and here is a set of samples of how I do my deployments. This sample is from a rest-api that is part of one of my recent projects. The project name is changed to "sample".</p>
+
+<p>All the basic info can be found on the <a href="http://capistranorb.com">Capistrano</a> website. </p>
+
+<p>First up my CAPFILE: (the rvm1/capistrano3 gem works really well for dealing with RVM deployments)</p>
+
+<pre><code> 1 # Load DSL and Setup Up Stages
+ 2 require 'capistrano/setup'
+ 3 
+ 4 # Includes default deployment tasks
+ 5 require 'capistrano/deploy'
+ 6 
+ 7 # Includes tasks from other gems included in your Gemfile
+ 8 #
+ 9 # For documentation on these, see for example:
+10 #...
+16 #
+17 require 'rvm1/capistrano3'
+18 require 'capistrano3/unicorn'
+19 #...
+27 # Loads custom tasks from `lib/capistrano/tasks' if you have any defined.
+28 Dir.glob('lib/capistrano/tasks/*.rake').each { |r| import r }
+</code></pre>
+
+<p>I use RVM and setting the correct ruby and gemset worked really well..</p>
+
+<pre><code># - Configuration settings for the deployment process
+#
+set :rvm_ruby_version, 'ruby-2.1.1@sampleapi'
+set :rvm1_ruby_version, 'ruby-2.1.1@sampleapi'
+#
+set :default_env, { rvm_bin_path: '~/.rvm/bin' }
+SSHKit.config.command_map[:rake] = "#{fetch(:default_env)[:rvm_bin_path]}/rvm ruby-#{fetch(:rvm_ruby_version)} do bundle exec rake"
+#
+# config valid only for Capistrano 3.1
+lock '3.2.1'
+#
+set :application, 'sampleapi'
+#
+#default_run_options[:pty] = true
+#
+set :repo_url, 'git@bitbucket.org:sample-user/sampleapi.git'
+#
+</code></pre>
+
+<p>Remote cache is much faster..</p>
+
+<pre><code># Deply via remote cache
+set :deploy_via, :remote_cache
+#
+# Default branch is :master
+set :branch, "master"
+# ask :branch, proc { `git rev-parse --abbrev-ref HEAD`.chomp }.call
+</code></pre>
+
+<p>Set the deploy folder</p>
+
+<pre><code># Default deploy_to directory is /var/www/my_app
+set :deploy_to, '/opt/www/sampleapi'
+</code></pre>
+
+<p>We use GIT</p>
+
+<pre><code># Default value for :scm is :git
+set :scm, :git
+
+
+# Default value for :format is :pretty
+set :format, :pretty
+</code></pre>
+
+<p>Turn on debug log level if you have a failed deploy to figure out what went wrong</p>
+
+<pre><code># Default value for :log_level is :debug
+#set :log_level, :debug
+set :log_level, :info
+#
+# SSH connections made to non standard port
+set :ssh_options, {
+  config: false,
+}
+#
+</code></pre>
+
+<p>This ensures any RVM updates and gem updates are always considered in each deploy step</p>
+
+<pre><code>before 'deploy', 'rvm1:install:rvm'
+before 'deploy', 'rvm1:install:ruby'
+before 'deploy', 'rvm1:install:gems'
+#
+# - These two lines are for when  Pubkey Auth is not enabled - i.e. prompts for the password
+#set :password, ask('Server password', nil)
+#server 'sample.cloudapp.net', user: 'deployer', port: 2122, password: fetch(:password), roles: %w{web app db}
+#
+</code></pre>
+
+<p>We use public key auth for SSH - the two lines above allow you to use password auth instead</p>
+
+<pre><code># - This is for when Pubkey Auth is enabled..
+server 'samplecloudapp.net', user: 'deployer', port: 2122, roles: %w{web app db}
+#
+# Stages in our case is just set to production
+set :stages, ["production"]
+#
+# Default value for :pty is false
+# set :pty, true
+set :pty, true
+</code></pre>
+
+<p>Here we make sure the yml config are not removed with each deploy - since they are symlinked from a shared folder</p>
+
+<pre><code># Default value for :linked_files is []
+# This means that the database.yml and redis.yml files are not get blatted with each new deploy!
+#
+set :linked_files, %w{config/database.yml config/redis.yml}
+#
+# Default value for linked_dirs is []
+set :linked_dirs, %w{bin log tmp/pids tmp/cache tmp/sockets vendor/bundle public/system}
+# Default value for keep_releases is 5
+set :keep_releases, 5
+# touch assets etc - to ensure they are refreshed with each deploy during development
+#set :normalize_asset_timestamps, %{public/images public/javascripts public/stylesheets}
+</code></pre>
+
+<p>This api uses unicorn as the webserver..</p>
+
+<pre><code># set some unicorn values
+set :unicorn_pid, '/opt/www/sampleapi/shared/pids/unicorn.pid'
+#
+set :unicorn_config_path, '/opt/www/sampleapi/current/config/unicorn.rb'
+#
+set :environment, "production"
+#
+</code></pre>
+
+<p>This is the final set of customised steps to link our configurations files, migrate the DB if required and 
+recompile all the assets with each deploy.</p>
+
+<pre><code>namespace :deploy do
+  desc 'assets and db migration'
+  task :dbmigrate do
+    on roles(:app) do
+      execute "cd #{fetch(:deploy_to)}/current/"
+      execute "cd #{fetch(:deploy_to)}/shared/config"
+      within "#{fetch(:deploy_to)}/shared/config/" do
+        execute "ln -sfn #{fetch(:deploy_to)}/shared/config/database.yml #{fetch(:deploy_to)}/current/config/database.yml"
+        execute "ln -sfn #{fetch(:deploy_to)}/shared/config/redis.yml #{fetch(:deploy_to)}/current/config/redis.yml"
+      end
+      execute "cd #{fetch(:deploy_to)}/current/" # just so we are in the app folder
+      within "#{fetch(:deploy_to)}/current/" do
+        with RAILS_ENV: fetch(:environment) do
+          execute :rake, "db:migrate"
+          execute :rake, "assets:precompile"
+        end
+      end  
+    end
+  end  
+</code></pre>
+
+<p>And finally restart UNICORN..</p>
+
+<pre><code>  desc 'restart unicorn'
+  task :restart do
+    invoke 'unicorn:restart'
+  end  
+
+  after :publishing, :dbmigrate
+  after :dbmigrate, :restart
+
+end
+</code></pre>
+
+<p>With this you should have a working automatic deployment..</p>
+
+	
+  	<div id="disqus_thread"></div>
+<script type="text/javascript">
+//<![CDATA[
+                  var disqus_shortname = 'code-netflakes';
+          
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+//]]>
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+	
+  </article>
+				
+      </section>
+	  
+      <footer>
+        <div class="col">
+          <h4>Recent Articles</h4>
+          <ol>
+              <li><a href="/capistranodeployprocess/">CapistranoDeployProcess</a> <span>Sep  9</span></li>
+              <li><a href="/jenkinstobuildruby/">JenkinsToBuildRuby</a> <span>Sep  9</span></li>
+              <li><a href="/tdd-with-nsubstitute/">tdd with nsubstitute</a> <span>May  5</span></li>
+              <li><a href="/building-with-albacore/">building c# with albacore</a> <span>May  3</span></li>
+              <li><a href="/working-with-tinyioc/">working with tinyioc</a> <span>May  2</span></li>
+          </ol>
+        </div>
+        <div class="col">
+          <h4>Tags</h4>
+          <ol>
+              <li><a href="/tags/c/">c# (3)</a></li>
+              <li><a href="/tags/ruby/">ruby (1)</a></li>
+              <li><a href="/tags/build/">build (1)</a></li>
+              <li><a href="/tags/albacore/">albacore (1)</a></li>
+              <li><a href="/tags/tdd/">tdd (1)</a></li>
+              <li><a href="/tags/dependency-injection/">dependency-injection (1)</a></li>
+          </ol>
+        </div>
+        <p>Steve Forkin &mdash; <a href="mailto:steve@netflakes.org">steve@netflakes.org</a></p>
+      </footer>
+	  
+	  
+    </div>
+    <script src="../javascripts/scale.fix.js?1410311636" type="text/javascript"></script>
+    
+    
+    <script type="text/javascript">
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-10920982-2']);
+      _gaq.push(['_trackPageview']);
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+  </body>
+</html>
