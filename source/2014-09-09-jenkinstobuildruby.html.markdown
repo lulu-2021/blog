@@ -6,11 +6,13 @@ tags:
 
 ## Jenkins, Continuous Integration Server and Ruby
 
-#### Jenkins is really easy to install on a vps and the configuration of build a ruby app is a snap
+#### Jenkins is really easy to install on a vps and the configuration of building ruby is a snap
 
 I have recently started my own business, building a Web Application with Ruby and Rails. I use Capistrano [capistrano](ttp://capistranorb.com/) for automated build deployment. Since I develop using a TDD approach, I was keen to have a continuous deployment process to the cloud up and running from the start.
 
-In my last job I used Windows Azure extensively and for comfort reasons decided to fire up a few Ubuntu virtual machines for a continuous build and deployment process. I have three virtual machines, one running Jenkins [jenkins](http://jenkins-ci.org/) as a build server, one application server and one database server. I use [bitbucket](https://bitbucket.org/) for Git source control. The basic flow is each time code is deployed to the master branch in Git, this triggers a build in Jenkins and in turn all unit and integration tests are run. On succes a second project in Jenkins does a full capistrano based automatic deployment to the Azure environment. This gives me a daily fresh build of all the work done.
+In my last job I used Windows Azure extensively and for comfort reasons decided to fire up a few Ubuntu virtual machines for a continuous build and deployment process. I have three virtual machines, one running Jenkins [jenkins](http://jenkins-ci.org/) as a build server, one application server and one database server. I use [bitbucket](https://bitbucket.org/) for Git source control. 
+
+The basic flow - each time code is deployed to the master branch in Git, this triggers a build in Jenkins and in turn all unit and integration tests are run. On succes a second project in Jenkins does a full capistrano based automatic deployment to the Azure environment. This gives me a daily fresh build of all the work done.
 
 I don't check in yml configuration files such as the database.yml and other such files into source control. They are just symlinked to shared configuration folders both in my local dev and in the deployment environments. For the Jenkins build process a simple shell script generates these files on the fly during the build process. 
 
@@ -20,7 +22,7 @@ The jenkins configuration also allows you to
 		Run the build in a RVM-managed environment (simple add your ruby/gemset here!)
 
 
-The example below has sensitive bits overwritten with ##..
+The shell script below is the meat of the build (sensitive bits overwritten with ##..)
 
 	#!/bin/bash -x
 
