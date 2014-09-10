@@ -14,7 +14,7 @@
     <link rel="alternate" href="http://blog.url.com/capistranodeployprocess/"/>
     <id>http://blog.url.com/capistranodeployprocess/</id>
     <published>2014-09-10T11:59:00+10:00</published>
-    <updated>2014-09-10T12:18:15+10:00</updated>
+    <updated>2014-09-10T12:21:03+10:00</updated>
     <author>
       <name>Article Author</name>
     </author>
@@ -47,6 +47,8 @@
 &lt;/code&gt;&lt;/pre&gt;
 
 &lt;p&gt;I use RVM and setting the correct ruby and gemset worked really well..&lt;/p&gt;
+
+&lt;p&gt;The next set of code snippets are all from my config/deploy.rb&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;# - Configuration settings for the deployment process
 #
