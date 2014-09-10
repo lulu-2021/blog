@@ -1,0 +1,173 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv='X-UA-Compatible' content='IE=edge;chrome=1' />
+
+    <title>tdd with nsubstitute</title>
+	
+    <link href='http://fonts.googleapis.com/css?family=Droid+Serif:400,700|Open+Sans:400,700' rel='stylesheet' type='text/css'>
+    <link href="../stylesheets/all.css?1410311636" rel="stylesheet" type="text/css" />
+    <script src="../javascripts/all.js?1410311636" type="text/javascript"></script>
+	
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link rel="alternate" type="application/rss+xml"  href="/feed.xml" title="Netflakes - Steve Forkin">
+
+  </head>
+  <body>
+
+    <div class="wrapper">
+
+      <header>
+        <h1><a href="/">Netflakes</a></h1>
+		<h4>Ruby is Fun..</h4>
+        by <a href="mailto:steve@netflakes.org">Steve Forkin</a>
+      </header>
+
+      <section>
+          <h2>
+    <a href="/tdd-with-nsubstitute/">tdd with nsubstitute</a>
+  </h2>
+  <time datetime="2014-05-05" pubdate>May  5, 2014</time>
+  <article>
+    <h2 id="testing-each-step-in-isolation-with-nsubstitute">Testing each step in isolation with NSubstitute</h2>
+
+<h4 id="nsubstitute-is-a-great-way-to-abstract-each-dependency-away-from-the-method-being-tested">NSubstitute is a great way to abstract each dependency away from the method being tested</h4>
+
+<p>I use <a href="https://github.com/xunit/xunit">Xunit</a> for unit testing each of layer of abstraction during development. I recently started
+to work with a framework called <a href="http://nancyfx.org/">Nancy</a> - the guys who developed this framework call it the - super-duper-happy-path - of web development. Am beginning to feel the same way as I work my way through all the docu and work with the framework it is really cool. One of the things I really enjoy is the testability. Nancy was developed using TDD and it makes
+mocking and testing each individual piece of the pie super simple.</p>
+
+<p><a href="http://nsubstitute.github.io/">NSubstitute</a> is a really nice way of doing all the required mocks to ensure you are testing only the actual method/process you want to test!</p>
+
+<p>This is a sample of testing a module in Nancy. Modules here are what Controllers are for traditional MVC. Nancy tries to imitate the
+small scale framework called <a href="http://www.sinatrarb.com/">Sinatra</a> in the world of Ruby. I have used this too - its great to get
+small apps and webservices up and running really quickly with a small amount of code. It just gets out of your way. This is the
+way of Nancy too, and yet its very flexible in terms of stuff you can add on as and when needed.</p>
+
+<p>Here I am testing a route that adds a new user - during this process the UserService and the UserRepository objects are both required
+and yet they are tested separately in other unit tests. Providing you have got proper Interfaces for your Service and Repository layers, NSubstitute will just abstract them away for you and allow you to quickly pre-set what results will be returned from the methods of the mocked objects - cool and really easy.</p>
+
+<pre><code>[Fact]
+public void TestAddingAnewUser_whereUserDoesNotExist_WithHtmlForm() 
+{
+    var testUser = CreateTestUser();
+	
+	/// mock the User Repository and all methods required for this test
+    IUserRepository userRepo = Substitute.For&lt;IUserRepository&gt;();
+    userRepo.Add(Arg.Any&lt;User&gt;()).Returns(true);
+    userRepo.IsUnique(testUser.UserIdentifier).Returns(true);			
+	
+	// mock the User Service and the methods required for this test
+    IUserService userService = Substitute.For&lt;IUserService&gt;();
+    userService.CreateUser(Arg.Any&lt;User&gt;()).Returns(testUser.UserId);
+    
+    TestBrowser = BrowserSetup(userRepo, userService);
+	
+    // run the actual test
+    var response = TestBrowser.Post(UsersUri, (with) =&gt;
+    {
+        with.Header("Accept", TextHtml);
+        with.HttpRequest();
+        with.FormValue("UserIdentifier", testUser.UserIdentifier);
+        with.FormValue("UserName", testUser.UserName);
+        with.FormValue("PrescriberNumber", testUser.PrescriberNumber.ToString());
+        with.FormValue("Fax", testUser.Fax);
+        with.FormValue("Mobile",testUser.Mobile );
+        with.FormValue("Telephone", testUser.Telephone);
+        with.FormValue("Address1", testUser.Address1);
+        with.FormValue("Address2", testUser.Address2);
+        with.FormValue("Suburb", testUser.Suburb);
+        with.FormValue("State", testUser.State);
+        with.FormValue("Postcode", testUser.Postcode);
+        with.FormValue("PostalSame", testUser.PostalSame.ToString());
+        with.FormValue("PostalAddress1", testUser.PostalAddress1);
+        with.FormValue("PostalAddress2", testUser.PostalAddress2);
+        with.FormValue("PostalSuburb", testUser.PostalSuburb);
+        with.FormValue("PostalPostcode", testUser.PostalPostcode);
+        with.FormValue("PostalState", testUser.PostalState);
+        with.FormValue("LastUpdated", testUser.LastUpdated.ToShortDateString());
+    });
+    // and check for a proper result
+    response.ShouldHaveRedirectedTo(UsersUri + testUser.UserId);
+}
+</code></pre>
+
+<p>As I work my way through building an API based app - I will add more updates on this.</p>
+
+	
+  	<div id="disqus_thread"></div>
+<script type="text/javascript">
+//<![CDATA[
+                  var disqus_shortname = 'code-netflakes';
+          
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+//]]>
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+	
+  </article>
+    <div class="article_footer">
+      <div class="tags">
+        Tags:
+        <a href="/tags/c/">c#</a>, <a href="/tags/tdd/">tdd</a>, <a href="/tags/mock/">mock</a>
+      </div>
+      <div class="timestamp">
+        2014-05-05
+      </div>
+      <div class='clear'></div>
+    </div>
+				
+      </section>
+	  
+      <footer>
+        <div class="col">
+          <h4>Recent Articles</h4>
+          <ol>
+              <li><a href="/jenkinstobuildruby/">JenkinsToBuildRuby</a> <span>Sep  9</span></li>
+              <li><a href="/tdd-with-nsubstitute/">tdd with nsubstitute</a> <span>May  5</span></li>
+              <li><a href="/building-with-albacore/">building c# with albacore</a> <span>May  3</span></li>
+              <li><a href="/working-with-tinyioc/">working with tinyioc</a> <span>May  2</span></li>
+              <li><a href="/building-net-with-albacore/">building .NET with albacore</a> <span>May  2</span></li>
+          </ol>
+        </div>
+        <div class="col">
+          <h4>Tags</h4>
+          <ol>
+              <li><a href="/tags/c/">c# (3)</a></li>
+              <li><a href="/tags/ruby/">ruby (1)</a></li>
+              <li><a href="/tags/build/">build (1)</a></li>
+              <li><a href="/tags/albacore/">albacore (1)</a></li>
+              <li><a href="/tags/tdd/">tdd (1)</a></li>
+              <li><a href="/tags/dependency-injection/">dependency-injection (1)</a></li>
+          </ol>
+        </div>
+        <p>Steve Forkin &mdash; <a href="mailto:steve@netflakes.org">steve@netflakes.org</a></p>
+      </footer>
+	  
+	  
+    </div>
+    <script src="../javascripts/scale.fix.js?1410311636" type="text/javascript"></script>
+    
+    
+    <script type="text/javascript">
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-10920982-2']);
+      _gaq.push(['_trackPageview']);
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+  </body>
+</html>

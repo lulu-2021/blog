@@ -1,0 +1,523 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>Blog Name</title>
+  <subtitle>Blog subtitle</subtitle>
+  <id>http://blog.url.com/</id>
+  <link href="http://blog.url.com/"/>
+  <link href="http://blog.url.com/feed.xml" rel="self"/>
+  <updated>2014-09-10T10:42:00+10:00</updated>
+  <author>
+    <name>Blog Author</name>
+  </author>
+  <entry>
+    <title>JenkinsToBuildRuby</title>
+    <link rel="alternate" href="http://blog.url.com/jenkinstobuildruby/"/>
+    <id>http://blog.url.com/jenkinstobuildruby/</id>
+    <published>2014-09-10T10:42:00+10:00</published>
+    <updated>2014-09-10T11:02:14+10:00</updated>
+    <author>
+      <name>Article Author</name>
+    </author>
+    <content type="html">&lt;h2 id="jenkins-continuous-integration-server-and-ruby"&gt;Jenkins, Continuous Integration Server and Ruby&lt;/h2&gt;
+
+&lt;h4 id="jenkins-is-really-easy-to-install-on-a-vps-and-the-configuration-of-build-a-ruby-app-is-a-snap"&gt;Jenkins is really easy to install on a vps and the configuration of build a ruby app is a snap&lt;/h4&gt;
+
+&lt;p&gt;I have recently started my own business, building a Web Application with Ruby and Rails. I use Capistrano &lt;a href="ttp://capistranorb.com/"&gt;capistrano&lt;/a&gt; for automated build deployment. Since I develop using a TDD approach, I was keen to have a continuous deployment process to the cloud up and running from the start.&lt;/p&gt;
+
+&lt;p&gt;In my last job I used Windows Azure extensively and for comfort reasons decided to fire up a few Ubuntu virtual machines for a continuous build and deployment process. I have three virtual machines, one running Jenkins &lt;a href="http://jenkins-ci.org/"&gt;jenkins&lt;/a&gt; as a build server, one application server and one database server. I use &lt;a href="https://bitbucket.org/"&gt;bitbucket&lt;/a&gt; for Git source control. The basic flow is each time code is deployed to the master branch in Git, this triggers a build in Jenkins and in turn all unit and integration tests are run. On succes a second project in Jenkins does a full capistrano based automatic deployment to the Azure environment. This gives me a daily fresh build of all the work done.&lt;/p&gt;
+
+&lt;p&gt;I don't check in yml configuration files such as the database.yml and other such files into source control. They are just symlinked to shared configuration folders both in my local dev and in the deployment environments. For the Jenkins build process a simple shell script generates these files on the fly during the build process. &lt;/p&gt;
+
+&lt;p&gt;The jenkins configuration also allows you to &lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;	Build when a change is pushed to Bitbucket
+	Run the build in a RVM-managed environment (simple add your ruby/gemset here!)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The example below has sensitive bits overwritten with ##..&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;#!/bin/bash -x
+
+unlink config/database.yml
+unlink config/redis.yml
+unlink config/services.yml
+
+export RAILS_ENV=test
+
+bundle install
+
+read -d '' database_yml &amp;lt;&amp;lt;"EOF"  
+login: &amp;amp;login  
+  adapter: postgresql
+  encoding: unicode
+  username: #########
+  password: #########
+  host: #########
+
+test: &amp;amp;test  
+  database: ###web_test
+  &amp;lt;&amp;lt;: *login
+EOF
+
+echo "$database_yml" &amp;gt; config/database.yml  
+
+read -d '' redis_yml &amp;lt;&amp;lt;"EOF"
+default:
+  host: localhost
+  port: 6379
+test:
+  db: 1
+production:
+  db: 2
+EOF
+
+echo "$redis_yml" &amp;gt; config/redis.yml
+
+read -d '' services_yml &amp;lt;&amp;lt;"EOF"
+
+services: &amp;amp;services
+  mail_api_baseurl: http://localhost:3001
+  mail_api_current_version: api/v1
+  ###_api_baseurl: http://localhost:3002
+  ###_api_current_version: api/v1
+  #####_api_baseurl: http://localhost:3003
+  #####_api_current_version: api/v1
+
+development:
+  &amp;lt;&amp;lt;: *services
+
+test:
+  &amp;lt;&amp;lt;: *services
+
+production:
+  &amp;lt;&amp;lt;: *services
+
+EOF
+
+echo "$services_yml" &amp;gt; config/services.yml
+
+
+rake db:create db:test:prepare  
+
+bundle exec rspec spec/models
+
+bundle exec rspec spec/fast
+
+bundle exec rspec spec/controllers
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The second project that does the actual deployment from Jenkins has these two simple shell scripts that handle the Capistrano deployment - nice and simple and it works:&lt;/p&gt;
+
+&lt;p&gt;One to do the actual prep work..&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;#!/bin/bash -x
+export RAILS_ENV=production
+bundle install
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;And the second to do the deploy..&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;eval `ssh-agent`
+echo $SSH_AGENT_PID &amp;gt; agent.pid
+ssh-add
+bundle exec cap production deploy
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Apart from the actual Capistrano deploy script that is pretty much it!&lt;/p&gt;
+
+&lt;p&gt;Enjoy.&lt;/p&gt;
+
+</content>
+  </entry>
+  <entry>
+    <title>tdd with nsubstitute</title>
+    <link rel="alternate" href="http://blog.url.com/tdd-with-nsubstitute/"/>
+    <id>http://blog.url.com/tdd-with-nsubstitute/</id>
+    <published>2014-05-06T09:01:00+10:00</published>
+    <updated>2014-09-10T11:11:59+10:00</updated>
+    <author>
+      <name>Article Author</name>
+    </author>
+    <content type="html">&lt;h2 id="testing-each-step-in-isolation-with-nsubstitute"&gt;Testing each step in isolation with NSubstitute&lt;/h2&gt;
+
+&lt;h4 id="nsubstitute-is-a-great-way-to-abstract-each-dependency-away-from-the-method-being-tested"&gt;NSubstitute is a great way to abstract each dependency away from the method being tested&lt;/h4&gt;
+
+&lt;p&gt;I use &lt;a href="https://github.com/xunit/xunit"&gt;Xunit&lt;/a&gt; for unit testing each of layer of abstraction during development. I recently started
+to work with a framework called &lt;a href="http://nancyfx.org/"&gt;Nancy&lt;/a&gt; - the guys who developed this framework call it the - super-duper-happy-path - of web development. Am beginning to feel the same way as I work my way through all the docu and work with the framework it is really cool. One of the things I really enjoy is the testability. Nancy was developed using TDD and it makes
+mocking and testing each individual piece of the pie super simple.&lt;/p&gt;
+
+&lt;p&gt;&lt;a href="http://nsubstitute.github.io/"&gt;NSubstitute&lt;/a&gt; is a really nice way of doing all the required mocks to ensure you are testing only the actual method/process you want to test!&lt;/p&gt;
+
+&lt;p&gt;This is a sample of testing a module in Nancy. Modules here are what Controllers are for traditional MVC. Nancy tries to imitate the
+small scale framework called &lt;a href="http://www.sinatrarb.com/"&gt;Sinatra&lt;/a&gt; in the world of Ruby. I have used this too - its great to get
+small apps and webservices up and running really quickly with a small amount of code. It just gets out of your way. This is the
+way of Nancy too, and yet its very flexible in terms of stuff you can add on as and when needed.&lt;/p&gt;
+
+&lt;p&gt;Here I am testing a route that adds a new user - during this process the UserService and the UserRepository objects are both required
+and yet they are tested separately in other unit tests. Providing you have got proper Interfaces for your Service and Repository layers, NSubstitute will just abstract them away for you and allow you to quickly pre-set what results will be returned from the methods of the mocked objects - cool and really easy.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;[Fact]
+public void TestAddingAnewUser_whereUserDoesNotExist_WithHtmlForm() 
+{
+    var testUser = CreateTestUser();
+	
+	/// mock the User Repository and all methods required for this test
+    IUserRepository userRepo = Substitute.For&amp;lt;IUserRepository&amp;gt;();
+    userRepo.Add(Arg.Any&amp;lt;User&amp;gt;()).Returns(true);
+    userRepo.IsUnique(testUser.UserIdentifier).Returns(true);			
+	
+	// mock the User Service and the methods required for this test
+    IUserService userService = Substitute.For&amp;lt;IUserService&amp;gt;();
+    userService.CreateUser(Arg.Any&amp;lt;User&amp;gt;()).Returns(testUser.UserId);
+    
+    TestBrowser = BrowserSetup(userRepo, userService);
+	
+    // run the actual test
+    var response = TestBrowser.Post(UsersUri, (with) =&amp;gt;
+    {
+        with.Header("Accept", TextHtml);
+        with.HttpRequest();
+        with.FormValue("UserIdentifier", testUser.UserIdentifier);
+        with.FormValue("UserName", testUser.UserName);
+        with.FormValue("PrescriberNumber", testUser.PrescriberNumber.ToString());
+        with.FormValue("Fax", testUser.Fax);
+        with.FormValue("Mobile",testUser.Mobile );
+        with.FormValue("Telephone", testUser.Telephone);
+        with.FormValue("Address1", testUser.Address1);
+        with.FormValue("Address2", testUser.Address2);
+        with.FormValue("Suburb", testUser.Suburb);
+        with.FormValue("State", testUser.State);
+        with.FormValue("Postcode", testUser.Postcode);
+        with.FormValue("PostalSame", testUser.PostalSame.ToString());
+        with.FormValue("PostalAddress1", testUser.PostalAddress1);
+        with.FormValue("PostalAddress2", testUser.PostalAddress2);
+        with.FormValue("PostalSuburb", testUser.PostalSuburb);
+        with.FormValue("PostalPostcode", testUser.PostalPostcode);
+        with.FormValue("PostalState", testUser.PostalState);
+        with.FormValue("LastUpdated", testUser.LastUpdated.ToShortDateString());
+    });
+    // and check for a proper result
+    response.ShouldHaveRedirectedTo(UsersUri + testUser.UserId);
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;As I work my way through building an API based app - I will add more updates on this.&lt;/p&gt;
+</content>
+  </entry>
+  <entry>
+    <title>building c# with albacore</title>
+    <link rel="alternate" href="http://blog.url.com/building-with-albacore/"/>
+    <id>http://blog.url.com/building-with-albacore/</id>
+    <published>2014-05-04T00:30:00+10:00</published>
+    <updated>2014-09-10T11:11:59+10:00</updated>
+    <author>
+      <name>Article Author</name>
+    </author>
+    <content type="html">&lt;h2 id="albacore-fun-and-easy-build-tool-for-net"&gt;Albacore, fun and easy build tool for .NET&lt;/h2&gt;
+
+&lt;h4 id="xml-ms-build-and-the-likes-are-no-fun-whereas-albacores-ruby-dsl-makes-for-a-great-build-tool-for-net-projects"&gt;xml, ms build and the likes are no fun whereas Albacore's ruby dsl makes for a great build tool for .NET projects&lt;/h4&gt;
+
+&lt;p&gt;Over the last 2 years I have been doing more work with Ruby, Rails when it comes to building web apps and also building some
+infrastructure automation in my day time job using &lt;a href="http://www.getchef.com/chef/"&gt;chef&lt;/a&gt;. Since I am not a huge fan of XML and
+avoid it when possible, I came accross &lt;a href="http://albacorebuild.net/"&gt;Albacore&lt;/a&gt; - which is a suite of &lt;a href="http://rake.rubyforge.org/"&gt;Rake&lt;/a&gt;
+tasks with a nice DSL to very quickly put together build scripts for .NET projects. Even if you are not a seasoned Ruby developer
+the amount of Ruby required to complete the build related tasks for .NET in Albacore is learned really quickly.&lt;/p&gt;
+
+&lt;p&gt;The basic requirement to get started with Albacore is to install Ruby. Windows support for Ruby is getting better. Most of my usual
+Ruby dev work is done in OSX and I use RVM to be able to have project based versioning on the Ruby side, you can't go passed this one.. There is a somewhat more limited third party tool called &lt;a href="https://github.com/vertiginous/pik"&gt;Pik&lt;/a&gt; which does all you need to get started with building .NET with Ruby.&lt;/p&gt;
+
+&lt;p&gt;Create a &lt;code&gt;Gemfile&lt;/code&gt; in the root of the project like this sample here:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt; source 'https://rubygems.org'
+
+ gem 'albacore', '0.3.5'
+ gem 'rubyzip', '0.9.9'
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Run &lt;code&gt;bundle&lt;/code&gt; or &lt;code&gt;bundle install&lt;/code&gt; to get the relevant gems installed. I had some issues with newer versions of the Albacore gem.&lt;/p&gt;
+
+&lt;p&gt;Then create a &lt;code&gt;Rakefile&lt;/code&gt; in the root of your project which has all the build, test and publish related steps in it.&lt;/p&gt;
+
+&lt;p&gt;At the start of the build script - you will typically configure the environment related stuff:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;#
+ENVIRONMENT = "Debug"
+#ENVIRONMENT = "Release"
+#
+BUILD_VERSION = 1001
+BUILD_DIR = "build"
+SOLUTION_NAME = "ManageAzure"
+PUBLISH_BASE = "c:/publish"
+PUBLISH_DIR = "#{PUBLISH_BASE}/#{SOLUTION_NAME}"
+SOLUTION = "#{SOLUTION_NAME}.sln"
+PROJECT_DIR = "ManageAzure"
+CONFIGURATION_OPT = "Debug"
+#CONFIGURATION_OPT = "Release"
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Since I also use xunit for my unit tests in C# projects - you will need to configure the runner..&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;#
+XUNIT_CONSOLE = "./Packages/xunit.1.9.2.runner/xunit.console.clr4.exe"
+UNIT_TEST_PROJECT = "ManageAzureTests"
+UNIT_TEST_ASSEMBLY = "./#{UNIT_TEST_PROJECT}/bin/#{ENVIRONMENT}/#{UNIT_TEST_PROJECT}.dll"
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Then the actual &lt;code&gt;build&lt;/code&gt; and &lt;code&gt;test&lt;/code&gt; steps are really simple Ruby code blocks:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;#
+desc "Run All Unit Tests"
+xunit :unittest do |xunit|
+    xunit.command = XUNIT_CONSOLE
+    xunit.assembly = UNIT_TEST_ASSEMBLY
+end
+#
+desc "Run the build step - in this case clean and build"
+msbuild :build do |cmd|
+	cmd.solution = "#{SOLUTION}"
+	cmd.targets = [:Clean, :Build]
+	cmd.properties = {:Configuration =&amp;gt; CONFIGURATION_OPT}
+end
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Finally you can chain steps into rake tasks to make things easier:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;task :test =&amp;gt; [:build, :unittest] do
+end
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Here is a &lt;a href="https://github.com/netflakes/AzureManagement/blob/master/RakeFile"&gt;Sample&lt;/a&gt; build &lt;code&gt;Rakefile&lt;/code&gt; for a recent project of mine.&lt;/p&gt;
+
+&lt;p&gt;The Albacore &lt;a href="https://github.com/Albacore/albacore/wiki"&gt;Wiki&lt;/a&gt; has all the detailed information to get started.  When it comes to doing up a build script for .NET - this is so much more fun than fiddling with XML descriptors etc.&lt;/p&gt;
+
+&lt;p&gt;Enjoy!&lt;/p&gt;
+</content>
+  </entry>
+  <entry>
+    <title>working with tinyioc</title>
+    <link rel="alternate" href="http://blog.url.com/working-with-tinyioc/"/>
+    <id>http://blog.url.com/working-with-tinyioc/</id>
+    <published>2014-05-03T14:54:00+10:00</published>
+    <updated>2014-09-10T11:11:59+10:00</updated>
+    <author>
+      <name>Article Author</name>
+    </author>
+    <content type="html">&lt;h2 id="inversion-of-control-with-tinyioc"&gt;Inversion of Control with TinyIoC&lt;/h2&gt;
+
+&lt;h4 id="dependency-injection-is-made-really-simple-with-tinyioc-and-for-smaller-projects"&gt;Dependency Injection is made really simple with TinyIoC and for smaller projects&lt;/h4&gt;
+
+&lt;p&gt;&lt;a href="https://github.com/grumpydev/TinyIoC/wiki"&gt;TinyIoC&lt;/a&gt; is really easy to use the setup is simplified and it is great to provide
+depencies to internal libraries and swap these out for different purposes. In building my Abstraction layer around the new
+Azure Management Client library to manage &amp;amp; report on Azure Cloud Services I used &lt;a href="https://github.com/grumpydev/TinyIoC/wiki"&gt;TinyIoC&lt;/a&gt; to inject the Logging and the configuration as in ability to provide the
+Azure subscriptionId and the Base64 Encoded Management certificate. In my case I am reading both of these from the downloaded
+PublishSettings files for each subscription.&lt;/p&gt;
+
+&lt;p&gt;The library I am working on is &lt;a href="https://github.com/netflakes/AzureManagement/blob/master/ManageAzure/Lib/AzureManagement.cs"&gt;here&lt;/a&gt;
+and here is how the dependencies are injected with TinyIoC:&lt;/p&gt;
+
+&lt;p&gt;You have a &lt;code&gt;Bootstrap&lt;/code&gt; class where the depencies are &lt;code&gt;registered&lt;/code&gt; with the Container. By using the &lt;code&gt;Interface&lt;/code&gt; we are effectively
+telling the IoC container to fire up a &lt;code&gt;singleton&lt;/code&gt; based instance - i.e. the only one ever running in the application.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;public static class Bootstrap 
+    {
+        public static void Register(string settingsFile)
+        {
+            IMlogger mLogger = new Mlogger();
+            IAppConfiguration appConfig = new ApplicationConfiguration(settingsFile);
+            TinyIoCContainer.Current.Register&amp;lt;IMlogger&amp;gt;(mLogger);
+            TinyIoCContainer.Current.Register&amp;lt;IAppConfiguration&amp;gt;(appConfig);
+        }
+    }
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Then when the application is started:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;static void Main(string[] args)
+{
+    Bootstrap.Register(AzurePublishSettingsFile);
+    var application = TinyIoCContainer.Current.Resolve&amp;lt;AzureManagement&amp;gt;();
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;You let the container do the actual dependency resolution and it takes care of building the objects with the right constructor.&lt;/p&gt;
+
+&lt;p&gt;In the case of the &lt;code&gt;IAppConfiguration&lt;/code&gt; dependency I have an interface that determines what methods the class provides to the outside world - i.e. the two requirements for the Azure Management Client - which needs the &lt;code&gt;SubscriptionId&lt;/code&gt; &amp;amp; the &lt;code&gt;Base64EncodedManagementCertificate&lt;/code&gt;.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;public interface IAppConfiguration 
+{
+    string SubscriptionId();
+    string Base64EncodedManagementCertificate();
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This is then implemented in my case as: (remembering the bueauty of DI is that this could then be changed later with any impact on the library that uses the data provided by this object/interface)&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;public class ApplicationConfiguration : IAppConfiguration
+{
+    PublishData AzurePublishData { get; set; }
+	
+    public ApplicationConfiguration(string settingsFile)
+    {
+        AzurePublishData = ReadAzurePublishSettingsFile(settingsFile);
+    }
+	
+    public string SubscriptionId()
+    {
+        return AzurePublishData._Profile._Subcription.Id;
+    }
+	
+    public string Base64EncodedManagementCertificate()
+    {
+        return AzurePublishData._Profile._Subcription.ManagementCertificate;
+    }
+	
+    /// &amp;lt;summary&amp;gt;
+    /// Deserialises the Azure Publish Settings File into a tree of objects that hold the Subscription Id and the Base 64 encoded Management Certificate
+    /// &amp;lt;/summary&amp;gt;
+    /// &amp;lt;param name="settingsPath"&amp;gt;Full path and file name of the Azure Publish Settings File&amp;lt;/param&amp;gt;
+    /// &amp;lt;returns&amp;gt;A PublishData object containing the Subscription Id and the Management Certificate&amp;lt;/returns&amp;gt;
+    private PublishData ReadAzurePublishSettingsFile(string settingsPath)
+    {
+        TextReader reader = null;
+        try
+        {
+            XmlSerializer deserializer = new XmlSerializer(typeof(PublishData));
+            reader = new StreamReader(@settingsPath);
+            object obj = deserializer.Deserialize(reader);
+            PublishData XmlData = (PublishData)obj;
+            return XmlData;
+        }
+        catch (InvalidOperationException ioe)
+        {
+            var message = String.Format("Error Reading the Azure Publish Settings File{0}", ioe);
+            throw ioe;
+        }
+        finally
+        {
+            reader.Close();
+        }
+    }
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Following on from this theme - my next step with this library will be implement local storage and reporting processes that will also be injected at startup so that they can be swapped out and also developed independantly of changes made to the library that is providing the data.&lt;/p&gt;
+
+&lt;p&gt;More to follow soon.&lt;/p&gt;
+</content>
+  </entry>
+  <entry>
+    <title>building .NET with albacore</title>
+    <link rel="alternate" href="http://blog.url.com/building-net-with-albacore/"/>
+    <id>http://blog.url.com/building-net-with-albacore/</id>
+    <published>2014-05-03T10:24:00+10:00</published>
+    <updated>2014-09-10T11:11:59+10:00</updated>
+    <author>
+      <name>Article Author</name>
+    </author>
+    <content type="html">&lt;h2 id="albacore-fun-and-easy-build-tool-for-net"&gt;Albacore, fun and easy build tool for .NET&lt;/h2&gt;
+
+&lt;h4 id="xml-ms-build-and-the-likes-are-no-fun-whereas-albacores-ruby-dsl-makes-for-a-great-build-tool-for-net-projects"&gt;xml, ms build and the likes are no fun whereas Albacore's ruby dsl makes for a great build tool for .NET projects&lt;/h4&gt;
+
+&lt;p&gt;Over the last 2 years I have been doing more work with Ruby, Rails when it comes to building web apps and also building some
+infrastructure automation in my day time job using &lt;a href="http://www.getchef.com/chef/"&gt;chef&lt;/a&gt;. Since I am not a huge fan of XML and
+avoid it when possible, I came accross &lt;a href="http://albacorebuild.net/"&gt;Albacore&lt;/a&gt; - which is a suite of &lt;a href="http://rake.rubyforge.org/"&gt;Rake&lt;/a&gt;
+tasks with a nice DSL to very quickly put together build scripts for .NET projects. Even if you are not a seasoned Ruby developer
+the amount of Ruby required to complete the build related tasks for .NET in Albacore is learned really quickly.&lt;/p&gt;
+
+&lt;p&gt;The basic requirement to get started with Albacore is to install Ruby. Windows support for Ruby is getting better. Most of my usual
+Ruby dev work is done in OSX and I use RVM to be able to have project based versioning on the Ruby side, you can't go passed this one.. There is a somewhat more limited third party tool called &lt;a href="https://github.com/vertiginous/pik"&gt;Pik&lt;/a&gt; which does all you need to get started with building .NET with Ruby.&lt;/p&gt;
+
+&lt;p&gt;Create a &lt;code&gt;Gemfile&lt;/code&gt; in the root of the project like this sample here:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt; source 'https://rubygems.org'
+
+ gem 'albacore', '0.3.5'
+ gem 'rubyzip', '0.9.9'
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Run &lt;code&gt;bundle&lt;/code&gt; or &lt;code&gt;bundle install&lt;/code&gt; to get the relevant gems installed. I had some issues with newer versions of the Albacore gem.&lt;/p&gt;
+
+&lt;p&gt;Then create a &lt;code&gt;Rakefile&lt;/code&gt; in the root of your project which has all the build, test and publish related steps in it.&lt;/p&gt;
+
+&lt;p&gt;At the start of the build script - you will typically configure the environment related stuff:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;#
+ENVIRONMENT = "Debug"
+#ENVIRONMENT = "Release"
+#
+BUILD_VERSION = 1001
+BUILD_DIR = "build"
+SOLUTION_NAME = "ManageAzure"
+PUBLISH_BASE = "c:/publish"
+PUBLISH_DIR = "#{PUBLISH_BASE}/#{SOLUTION_NAME}"
+SOLUTION = "#{SOLUTION_NAME}.sln"
+PROJECT_DIR = "ManageAzure"
+CONFIGURATION_OPT = "Debug"
+#CONFIGURATION_OPT = "Release"
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Since I also use xunit for my unit tests in C# projects - you will need to configure the runner..&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;#
+XUNIT_CONSOLE = "./Packages/xunit.1.9.2.runner/xunit.console.clr4.exe"
+UNIT_TEST_PROJECT = "ManageAzureTests"
+UNIT_TEST_ASSEMBLY = "./#{UNIT_TEST_PROJECT}/bin/#{ENVIRONMENT}/#{UNIT_TEST_PROJECT}.dll"
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Then the actual &lt;code&gt;build&lt;/code&gt; and &lt;code&gt;test&lt;/code&gt; steps are really simple Ruby code blocks:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;#
+desc "Run All Unit Tests"
+xunit :unittest do |xunit|
+    xunit.command = XUNIT_CONSOLE
+    xunit.assembly = UNIT_TEST_ASSEMBLY
+end
+#
+desc "Run the build step - in this case clean and build"
+msbuild :build do |cmd|
+	cmd.solution = "#{SOLUTION}"
+	cmd.targets = [:Clean, :Build]
+	cmd.properties = {:Configuration =&amp;gt; CONFIGURATION_OPT}
+end
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Finally you can chain steps into rake tasks to make things easier:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;task :test =&amp;gt; [:build, :unittest] do
+end
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Here is a &lt;a href="https://github.com/netflakes/AzureManagement/blob/master/RakeFile"&gt;Sample&lt;/a&gt; build &lt;code&gt;Rakefile&lt;/code&gt; for a recent project of mine.&lt;/p&gt;
+
+&lt;p&gt;The Albacore &lt;a href="https://github.com/Albacore/albacore/wiki"&gt;Wiki&lt;/a&gt; has all the detailed information to get started.  When it comes to doing up a build script for .NET - this is so much more fun than fiddling with XML descriptors etc.&lt;/p&gt;
+
+&lt;p&gt;Enjoy!&lt;/p&gt;
+</content>
+  </entry>
+  <entry>
+    <title>launching the netflakes blog</title>
+    <link rel="alternate" href="http://blog.url.com/launching-the-netflakes-blog/"/>
+    <id>http://blog.url.com/launching-the-netflakes-blog/</id>
+    <published>2014-05-02T11:00:00+10:00</published>
+    <updated>2014-09-10T11:11:59+10:00</updated>
+    <author>
+      <name>Article Author</name>
+    </author>
+    <content type="html">&lt;h2 id="launching-my-new-code-blog-on-github"&gt;Launching my new code blog on github&lt;/h2&gt;
+
+&lt;h4 id="this-is-my-attempt-to-document-my-journey-whilst-developing-with-using-c-and-some-ruby-and-others"&gt;This is my attempt to document my journey whilst developing with using C# and some Ruby and others&lt;/h4&gt;
+
+&lt;p&gt;Lately I have been working with the Azure platform a fair bit and with the recent release of the &lt;a href="http://www.bradygaster.com/post/getting-started-with-the-windows-azure-management-libraries"&gt;Windows Azure Management Libraries&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;Prior to this I have used powershell to interact with the Windows Azure Rest API, but this new set of Client Libraries is so much more fun.&lt;/p&gt;
+
+&lt;p&gt;My initial solution is available on my &lt;a href="https://github.com/netflakes/AzureManagement"&gt;github.com/netflakes&lt;/a&gt; account. Sofar I have a project that gathers stats on the cloud services and virtual machines and can also download sets of RDP files for all or for Cloud services.&lt;/p&gt;
+
+&lt;p&gt;Following my passion for TDD I have a set of unittests for each method and this will grow. Logging and configuration is isolated from the main code via DI. There is a command line app that will be able to call each method in the class library. Following on from this I intend to add different output/storage mechanisms also via DI that can be plugged in when needed.&lt;/p&gt;
+
+&lt;p&gt;At my work we have a large number of subscriptions and associated services for the many projects we are involved in and this is becoming ever more complex to manage. Automating this is the only way to keep a handle on things.&lt;/p&gt;
+
+&lt;p&gt;We also have the need to dissseminate reports and information to developers and managers and I can see some benefit for adding a small webservice. Once we can cache all the information retrieved from Azure locally we can make this available.&lt;/p&gt;
+
+&lt;p&gt;&lt;a href="http://nancyfx.org"&gt;Nancy&lt;/a&gt; seems like a great fit for the webservice that will be added.&lt;/p&gt;
+</content>
+  </entry>
+</feed>

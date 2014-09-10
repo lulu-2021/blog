@@ -1,0 +1,126 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv='X-UA-Compatible' content='IE=edge;chrome=1' />
+
+    <title>launching the netflakes blog</title>
+	
+    <link href='http://fonts.googleapis.com/css?family=Droid+Serif:400,700|Open+Sans:400,700' rel='stylesheet' type='text/css'>
+    <link href="../stylesheets/all.css?1410311636" rel="stylesheet" type="text/css" />
+    <script src="../javascripts/all.js?1410311636" type="text/javascript"></script>
+	
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link rel="alternate" type="application/rss+xml"  href="/feed.xml" title="Netflakes - Steve Forkin">
+
+  </head>
+  <body>
+
+    <div class="wrapper">
+
+      <header>
+        <h1><a href="/">Netflakes</a></h1>
+		<h4>Ruby is Fun..</h4>
+        by <a href="mailto:steve@netflakes.org">Steve Forkin</a>
+      </header>
+
+      <section>
+          <h2>
+    <a href="/launching-the-netflakes-blog/">launching the netflakes blog</a>
+  </h2>
+  <time datetime="2014-05-01" pubdate>May  1, 2014</time>
+  <article>
+    <h2 id="launching-my-new-code-blog-on-github">Launching my new code blog on github</h2>
+
+<h4 id="this-is-my-attempt-to-document-my-journey-whilst-developing-with-using-c-and-some-ruby-and-others">This is my attempt to document my journey whilst developing with using C# and some Ruby and others</h4>
+
+<p>Lately I have been working with the Azure platform a fair bit and with the recent release of the <a href="http://www.bradygaster.com/post/getting-started-with-the-windows-azure-management-libraries">Windows Azure Management Libraries</a>.</p>
+
+<p>Prior to this I have used powershell to interact with the Windows Azure Rest API, but this new set of Client Libraries is so much more fun.</p>
+
+<p>My initial solution is available on my <a href="https://github.com/netflakes/AzureManagement">github.com/netflakes</a> account. Sofar I have a project that gathers stats on the cloud services and virtual machines and can also download sets of RDP files for all or for Cloud services.</p>
+
+<p>Following my passion for TDD I have a set of unittests for each method and this will grow. Logging and configuration is isolated from the main code via DI. There is a command line app that will be able to call each method in the class library. Following on from this I intend to add different output/storage mechanisms also via DI that can be plugged in when needed.</p>
+
+<p>At my work we have a large number of subscriptions and associated services for the many projects we are involved in and this is becoming ever more complex to manage. Automating this is the only way to keep a handle on things.</p>
+
+<p>We also have the need to dissseminate reports and information to developers and managers and I can see some benefit for adding a small webservice. Once we can cache all the information retrieved from Azure locally we can make this available.</p>
+
+<p><a href="http://nancyfx.org">Nancy</a> seems like a great fit for the webservice that will be added.</p>
+
+	
+  	<div id="disqus_thread"></div>
+<script type="text/javascript">
+//<![CDATA[
+                  var disqus_shortname = 'code-netflakes';
+          
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+//]]>
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+	
+  </article>
+    <div class="article_footer">
+      <div class="tags">
+        Tags:
+        <a href="/tags/azure/">azure</a>, <a href="/tags/azure-management-client-library/">azure-management-client-library</a>
+      </div>
+      <div class="timestamp">
+        2014-05-01
+      </div>
+      <div class='clear'></div>
+    </div>
+				
+      </section>
+	  
+      <footer>
+        <div class="col">
+          <h4>Recent Articles</h4>
+          <ol>
+              <li><a href="/jenkinstobuildruby/">JenkinsToBuildRuby</a> <span>Sep  9</span></li>
+              <li><a href="/tdd-with-nsubstitute/">tdd with nsubstitute</a> <span>May  5</span></li>
+              <li><a href="/building-with-albacore/">building c# with albacore</a> <span>May  3</span></li>
+              <li><a href="/working-with-tinyioc/">working with tinyioc</a> <span>May  2</span></li>
+              <li><a href="/building-net-with-albacore/">building .NET with albacore</a> <span>May  2</span></li>
+          </ol>
+        </div>
+        <div class="col">
+          <h4>Tags</h4>
+          <ol>
+              <li><a href="/tags/c/">c# (3)</a></li>
+              <li><a href="/tags/ruby/">ruby (1)</a></li>
+              <li><a href="/tags/build/">build (1)</a></li>
+              <li><a href="/tags/albacore/">albacore (1)</a></li>
+              <li><a href="/tags/tdd/">tdd (1)</a></li>
+              <li><a href="/tags/dependency-injection/">dependency-injection (1)</a></li>
+          </ol>
+        </div>
+        <p>Steve Forkin &mdash; <a href="mailto:steve@netflakes.org">steve@netflakes.org</a></p>
+      </footer>
+	  
+	  
+    </div>
+    <script src="../javascripts/scale.fix.js?1410311636" type="text/javascript"></script>
+    
+    
+    <script type="text/javascript">
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-10920982-2']);
+      _gaq.push(['_trackPageview']);
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+  </body>
+</html>

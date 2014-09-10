@@ -1,0 +1,208 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv='X-UA-Compatible' content='IE=edge;chrome=1' />
+
+    <title>working with tinyioc</title>
+	
+    <link href='http://fonts.googleapis.com/css?family=Droid+Serif:400,700|Open+Sans:400,700' rel='stylesheet' type='text/css'>
+    <link href="../stylesheets/all.css?1410311636" rel="stylesheet" type="text/css" />
+    <script src="../javascripts/all.js?1410311636" type="text/javascript"></script>
+	
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link rel="alternate" type="application/rss+xml"  href="/feed.xml" title="Netflakes - Steve Forkin">
+
+  </head>
+  <body>
+
+    <div class="wrapper">
+
+      <header>
+        <h1><a href="/">Netflakes</a></h1>
+		<h4>Ruby is Fun..</h4>
+        by <a href="mailto:steve@netflakes.org">Steve Forkin</a>
+      </header>
+
+      <section>
+          <h2>
+    <a href="/working-with-tinyioc/">working with tinyioc</a>
+  </h2>
+  <time datetime="2014-05-02" pubdate>May  2, 2014</time>
+  <article>
+    <h2 id="inversion-of-control-with-tinyioc">Inversion of Control with TinyIoC</h2>
+
+<h4 id="dependency-injection-is-made-really-simple-with-tinyioc-and-for-smaller-projects">Dependency Injection is made really simple with TinyIoC and for smaller projects</h4>
+
+<p><a href="https://github.com/grumpydev/TinyIoC/wiki">TinyIoC</a> is really easy to use the setup is simplified and it is great to provide
+depencies to internal libraries and swap these out for different purposes. In building my Abstraction layer around the new
+Azure Management Client library to manage &amp; report on Azure Cloud Services I used <a href="https://github.com/grumpydev/TinyIoC/wiki">TinyIoC</a> to inject the Logging and the configuration as in ability to provide the
+Azure subscriptionId and the Base64 Encoded Management certificate. In my case I am reading both of these from the downloaded
+PublishSettings files for each subscription.</p>
+
+<p>The library I am working on is <a href="https://github.com/netflakes/AzureManagement/blob/master/ManageAzure/Lib/AzureManagement.cs">here</a>
+and here is how the dependencies are injected with TinyIoC:</p>
+
+<p>You have a <code>Bootstrap</code> class where the depencies are <code>registered</code> with the Container. By using the <code>Interface</code> we are effectively
+telling the IoC container to fire up a <code>singleton</code> based instance - i.e. the only one ever running in the application.</p>
+
+<pre><code>public static class Bootstrap 
+    {
+        public static void Register(string settingsFile)
+        {
+            IMlogger mLogger = new Mlogger();
+            IAppConfiguration appConfig = new ApplicationConfiguration(settingsFile);
+            TinyIoCContainer.Current.Register&lt;IMlogger&gt;(mLogger);
+            TinyIoCContainer.Current.Register&lt;IAppConfiguration&gt;(appConfig);
+        }
+    }
+</code></pre>
+
+<p>Then when the application is started:</p>
+
+<pre><code>static void Main(string[] args)
+{
+    Bootstrap.Register(AzurePublishSettingsFile);
+    var application = TinyIoCContainer.Current.Resolve&lt;AzureManagement&gt;();
+</code></pre>
+
+<p>You let the container do the actual dependency resolution and it takes care of building the objects with the right constructor.</p>
+
+<p>In the case of the <code>IAppConfiguration</code> dependency I have an interface that determines what methods the class provides to the outside world - i.e. the two requirements for the Azure Management Client - which needs the <code>SubscriptionId</code> &amp; the <code>Base64EncodedManagementCertificate</code>.</p>
+
+<pre><code>public interface IAppConfiguration 
+{
+    string SubscriptionId();
+    string Base64EncodedManagementCertificate();
+}
+</code></pre>
+
+<p>This is then implemented in my case as: (remembering the bueauty of DI is that this could then be changed later with any impact on the library that uses the data provided by this object/interface)</p>
+
+<pre><code>public class ApplicationConfiguration : IAppConfiguration
+{
+    PublishData AzurePublishData { get; set; }
+	
+    public ApplicationConfiguration(string settingsFile)
+    {
+        AzurePublishData = ReadAzurePublishSettingsFile(settingsFile);
+    }
+	
+    public string SubscriptionId()
+    {
+        return AzurePublishData._Profile._Subcription.Id;
+    }
+	
+    public string Base64EncodedManagementCertificate()
+    {
+        return AzurePublishData._Profile._Subcription.ManagementCertificate;
+    }
+	
+    /// &lt;summary&gt;
+    /// Deserialises the Azure Publish Settings File into a tree of objects that hold the Subscription Id and the Base 64 encoded Management Certificate
+    /// &lt;/summary&gt;
+    /// &lt;param name="settingsPath"&gt;Full path and file name of the Azure Publish Settings File&lt;/param&gt;
+    /// &lt;returns&gt;A PublishData object containing the Subscription Id and the Management Certificate&lt;/returns&gt;
+    private PublishData ReadAzurePublishSettingsFile(string settingsPath)
+    {
+        TextReader reader = null;
+        try
+        {
+            XmlSerializer deserializer = new XmlSerializer(typeof(PublishData));
+            reader = new StreamReader(@settingsPath);
+            object obj = deserializer.Deserialize(reader);
+            PublishData XmlData = (PublishData)obj;
+            return XmlData;
+        }
+        catch (InvalidOperationException ioe)
+        {
+            var message = String.Format("Error Reading the Azure Publish Settings File{0}", ioe);
+            throw ioe;
+        }
+        finally
+        {
+            reader.Close();
+        }
+    }
+</code></pre>
+
+<p>Following on from this theme - my next step with this library will be implement local storage and reporting processes that will also be injected at startup so that they can be swapped out and also developed independantly of changes made to the library that is providing the data.</p>
+
+<p>More to follow soon.</p>
+
+	
+  	<div id="disqus_thread"></div>
+<script type="text/javascript">
+//<![CDATA[
+                  var disqus_shortname = 'code-netflakes';
+          
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+//]]>
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+	
+  </article>
+    <div class="article_footer">
+      <div class="tags">
+        Tags:
+        <a href="/tags/c/">c#</a>, <a href="/tags/inversion-of-control/">inversion-of-control</a>, <a href="/tags/dependency-injection/">dependency-injection</a>
+      </div>
+      <div class="timestamp">
+        2014-05-02
+      </div>
+      <div class='clear'></div>
+    </div>
+				
+      </section>
+	  
+      <footer>
+        <div class="col">
+          <h4>Recent Articles</h4>
+          <ol>
+              <li><a href="/jenkinstobuildruby/">JenkinsToBuildRuby</a> <span>Sep  9</span></li>
+              <li><a href="/tdd-with-nsubstitute/">tdd with nsubstitute</a> <span>May  5</span></li>
+              <li><a href="/building-with-albacore/">building c# with albacore</a> <span>May  3</span></li>
+              <li><a href="/working-with-tinyioc/">working with tinyioc</a> <span>May  2</span></li>
+              <li><a href="/building-net-with-albacore/">building .NET with albacore</a> <span>May  2</span></li>
+          </ol>
+        </div>
+        <div class="col">
+          <h4>Tags</h4>
+          <ol>
+              <li><a href="/tags/c/">c# (3)</a></li>
+              <li><a href="/tags/ruby/">ruby (1)</a></li>
+              <li><a href="/tags/build/">build (1)</a></li>
+              <li><a href="/tags/albacore/">albacore (1)</a></li>
+              <li><a href="/tags/tdd/">tdd (1)</a></li>
+              <li><a href="/tags/dependency-injection/">dependency-injection (1)</a></li>
+          </ol>
+        </div>
+        <p>Steve Forkin &mdash; <a href="mailto:steve@netflakes.org">steve@netflakes.org</a></p>
+      </footer>
+	  
+	  
+    </div>
+    <script src="../javascripts/scale.fix.js?1410311636" type="text/javascript"></script>
+    
+    
+    <script type="text/javascript">
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-10920982-2']);
+      _gaq.push(['_trackPageview']);
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+  </body>
+</html>

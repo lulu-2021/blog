@@ -1,0 +1,208 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv='X-UA-Compatible' content='IE=edge;chrome=1' />
+
+    <title>JenkinsToBuildRuby</title>
+	
+    <link href='http://fonts.googleapis.com/css?family=Droid+Serif:400,700|Open+Sans:400,700' rel='stylesheet' type='text/css'>
+    <link href="../stylesheets/all.css?1410311636" rel="stylesheet" type="text/css" />
+    <script src="../javascripts/all.js?1410311636" type="text/javascript"></script>
+	
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link rel="alternate" type="application/rss+xml"  href="/feed.xml" title="Netflakes - Steve Forkin">
+
+  </head>
+  <body>
+
+    <div class="wrapper">
+
+      <header>
+        <h1><a href="/">Netflakes</a></h1>
+		<h4>Ruby is Fun..</h4>
+        by <a href="mailto:steve@netflakes.org">Steve Forkin</a>
+      </header>
+
+      <section>
+          <h2>
+    <a href="/jenkinstobuildruby/">JenkinsToBuildRuby</a>
+  </h2>
+  <time datetime="2014-09-09" pubdate>Sep  9, 2014</time>
+  <article>
+    <h2 id="jenkins-continuous-integration-server-and-ruby">Jenkins, Continuous Integration Server and Ruby</h2>
+
+<h4 id="jenkins-is-really-easy-to-install-on-a-vps-and-the-configuration-of-build-a-ruby-app-is-a-snap">Jenkins is really easy to install on a vps and the configuration of build a ruby app is a snap</h4>
+
+<p>I have recently started my own business, building a Web Application with Ruby and Rails. I use Capistrano <a href="ttp://capistranorb.com/">capistrano</a> for automated build deployment. Since I develop using a TDD approach, I was keen to have a continuous deployment process to the cloud up and running from the start.</p>
+
+<p>In my last job I used Windows Azure extensively and for comfort reasons decided to fire up a few Ubuntu virtual machines for a continuous build and deployment process. I have three virtual machines, one running Jenkins <a href="http://jenkins-ci.org/">jenkins</a> as a build server, one application server and one database server. I use <a href="https://bitbucket.org/">bitbucket</a> for Git source control. The basic flow is each time code is deployed to the master branch in Git, this triggers a build in Jenkins and in turn all unit and integration tests are run. On succes a second project in Jenkins does a full capistrano based automatic deployment to the Azure environment. This gives me a daily fresh build of all the work done.</p>
+
+<p>I don't check in yml configuration files such as the database.yml and other such files into source control. They are just symlinked to shared configuration folders both in my local dev and in the deployment environments. For the Jenkins build process a simple shell script generates these files on the fly during the build process. </p>
+
+<p>The jenkins configuration also allows you to </p>
+
+<pre><code>	Build when a change is pushed to Bitbucket
+	Run the build in a RVM-managed environment (simple add your ruby/gemset here!)
+</code></pre>
+
+<p>The example below has sensitive bits overwritten with ##..</p>
+
+<pre><code>#!/bin/bash -x
+
+unlink config/database.yml
+unlink config/redis.yml
+unlink config/services.yml
+
+export RAILS_ENV=test
+
+bundle install
+
+read -d '' database_yml &lt;&lt;"EOF"  
+login: &amp;login  
+  adapter: postgresql
+  encoding: unicode
+  username: #########
+  password: #########
+  host: #########
+
+test: &amp;test  
+  database: ###web_test
+  &lt;&lt;: *login
+EOF
+
+echo "$database_yml" &gt; config/database.yml  
+
+read -d '' redis_yml &lt;&lt;"EOF"
+default:
+  host: localhost
+  port: 6379
+test:
+  db: 1
+production:
+  db: 2
+EOF
+
+echo "$redis_yml" &gt; config/redis.yml
+
+read -d '' services_yml &lt;&lt;"EOF"
+
+services: &amp;services
+  mail_api_baseurl: http://localhost:3001
+  mail_api_current_version: api/v1
+  ###_api_baseurl: http://localhost:3002
+  ###_api_current_version: api/v1
+  #####_api_baseurl: http://localhost:3003
+  #####_api_current_version: api/v1
+
+development:
+  &lt;&lt;: *services
+
+test:
+  &lt;&lt;: *services
+
+production:
+  &lt;&lt;: *services
+
+EOF
+
+echo "$services_yml" &gt; config/services.yml
+
+
+rake db:create db:test:prepare  
+
+bundle exec rspec spec/models
+
+bundle exec rspec spec/fast
+
+bundle exec rspec spec/controllers
+</code></pre>
+
+<p>The second project that does the actual deployment from Jenkins has these two simple shell scripts that handle the Capistrano deployment - nice and simple and it works:</p>
+
+<p>One to do the actual prep work..</p>
+
+<pre><code>#!/bin/bash -x
+export RAILS_ENV=production
+bundle install
+</code></pre>
+
+<p>And the second to do the deploy..</p>
+
+<pre><code>eval `ssh-agent`
+echo $SSH_AGENT_PID &gt; agent.pid
+ssh-add
+bundle exec cap production deploy
+</code></pre>
+
+<p>Apart from the actual Capistrano deploy script that is pretty much it!</p>
+
+<p>Enjoy.</p>
+
+
+	
+  	<div id="disqus_thread"></div>
+<script type="text/javascript">
+//<![CDATA[
+                  var disqus_shortname = 'code-netflakes';
+          
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+//]]>
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+	
+  </article>
+				
+      </section>
+	  
+      <footer>
+        <div class="col">
+          <h4>Recent Articles</h4>
+          <ol>
+              <li><a href="/jenkinstobuildruby/">JenkinsToBuildRuby</a> <span>Sep  9</span></li>
+              <li><a href="/tdd-with-nsubstitute/">tdd with nsubstitute</a> <span>May  5</span></li>
+              <li><a href="/building-with-albacore/">building c# with albacore</a> <span>May  3</span></li>
+              <li><a href="/working-with-tinyioc/">working with tinyioc</a> <span>May  2</span></li>
+              <li><a href="/building-net-with-albacore/">building .NET with albacore</a> <span>May  2</span></li>
+          </ol>
+        </div>
+        <div class="col">
+          <h4>Tags</h4>
+          <ol>
+              <li><a href="/tags/c/">c# (3)</a></li>
+              <li><a href="/tags/ruby/">ruby (1)</a></li>
+              <li><a href="/tags/build/">build (1)</a></li>
+              <li><a href="/tags/albacore/">albacore (1)</a></li>
+              <li><a href="/tags/tdd/">tdd (1)</a></li>
+              <li><a href="/tags/dependency-injection/">dependency-injection (1)</a></li>
+          </ol>
+        </div>
+        <p>Steve Forkin &mdash; <a href="mailto:steve@netflakes.org">steve@netflakes.org</a></p>
+      </footer>
+	  
+	  
+    </div>
+    <script src="../javascripts/scale.fix.js?1410311636" type="text/javascript"></script>
+    
+    
+    <script type="text/javascript">
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-10920982-2']);
+      _gaq.push(['_trackPageview']);
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+  </body>
+</html>

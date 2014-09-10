@@ -1,0 +1,187 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv='X-UA-Compatible' content='IE=edge;chrome=1' />
+
+    <title>building c# with albacore</title>
+	
+    <link href='http://fonts.googleapis.com/css?family=Droid+Serif:400,700|Open+Sans:400,700' rel='stylesheet' type='text/css'>
+    <link href="../stylesheets/all.css?1410311636" rel="stylesheet" type="text/css" />
+    <script src="../javascripts/all.js?1410311636" type="text/javascript"></script>
+	
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link rel="alternate" type="application/rss+xml"  href="/feed.xml" title="Netflakes - Steve Forkin">
+
+  </head>
+  <body>
+
+    <div class="wrapper">
+
+      <header>
+        <h1><a href="/">Netflakes</a></h1>
+		<h4>Ruby is Fun..</h4>
+        by <a href="mailto:steve@netflakes.org">Steve Forkin</a>
+      </header>
+
+      <section>
+          <h2>
+    <a href="/building-with-albacore/">building c# with albacore</a>
+  </h2>
+  <time datetime="2014-05-03" pubdate>May  3, 2014</time>
+  <article>
+    <h2 id="albacore-fun-and-easy-build-tool-for-net">Albacore, fun and easy build tool for .NET</h2>
+
+<h4 id="xml-ms-build-and-the-likes-are-no-fun-whereas-albacores-ruby-dsl-makes-for-a-great-build-tool-for-net-projects">xml, ms build and the likes are no fun whereas Albacore's ruby dsl makes for a great build tool for .NET projects</h4>
+
+<p>Over the last 2 years I have been doing more work with Ruby, Rails when it comes to building web apps and also building some
+infrastructure automation in my day time job using <a href="http://www.getchef.com/chef/">chef</a>. Since I am not a huge fan of XML and
+avoid it when possible, I came accross <a href="http://albacorebuild.net/">Albacore</a> - which is a suite of <a href="http://rake.rubyforge.org/">Rake</a>
+tasks with a nice DSL to very quickly put together build scripts for .NET projects. Even if you are not a seasoned Ruby developer
+the amount of Ruby required to complete the build related tasks for .NET in Albacore is learned really quickly.</p>
+
+<p>The basic requirement to get started with Albacore is to install Ruby. Windows support for Ruby is getting better. Most of my usual
+Ruby dev work is done in OSX and I use RVM to be able to have project based versioning on the Ruby side, you can't go passed this one.. There is a somewhat more limited third party tool called <a href="https://github.com/vertiginous/pik">Pik</a> which does all you need to get started with building .NET with Ruby.</p>
+
+<p>Create a <code>Gemfile</code> in the root of the project like this sample here:</p>
+
+<pre><code> source 'https://rubygems.org'
+
+ gem 'albacore', '0.3.5'
+ gem 'rubyzip', '0.9.9'
+</code></pre>
+
+<p>Run <code>bundle</code> or <code>bundle install</code> to get the relevant gems installed. I had some issues with newer versions of the Albacore gem.</p>
+
+<p>Then create a <code>Rakefile</code> in the root of your project which has all the build, test and publish related steps in it.</p>
+
+<p>At the start of the build script - you will typically configure the environment related stuff:</p>
+
+<pre><code>#
+ENVIRONMENT = "Debug"
+#ENVIRONMENT = "Release"
+#
+BUILD_VERSION = 1001
+BUILD_DIR = "build"
+SOLUTION_NAME = "ManageAzure"
+PUBLISH_BASE = "c:/publish"
+PUBLISH_DIR = "#{PUBLISH_BASE}/#{SOLUTION_NAME}"
+SOLUTION = "#{SOLUTION_NAME}.sln"
+PROJECT_DIR = "ManageAzure"
+CONFIGURATION_OPT = "Debug"
+#CONFIGURATION_OPT = "Release"
+</code></pre>
+
+<p>Since I also use xunit for my unit tests in C# projects - you will need to configure the runner..</p>
+
+<pre><code>#
+XUNIT_CONSOLE = "./Packages/xunit.1.9.2.runner/xunit.console.clr4.exe"
+UNIT_TEST_PROJECT = "ManageAzureTests"
+UNIT_TEST_ASSEMBLY = "./#{UNIT_TEST_PROJECT}/bin/#{ENVIRONMENT}/#{UNIT_TEST_PROJECT}.dll"
+</code></pre>
+
+<p>Then the actual <code>build</code> and <code>test</code> steps are really simple Ruby code blocks:</p>
+
+<pre><code>#
+desc "Run All Unit Tests"
+xunit :unittest do |xunit|
+    xunit.command = XUNIT_CONSOLE
+    xunit.assembly = UNIT_TEST_ASSEMBLY
+end
+#
+desc "Run the build step - in this case clean and build"
+msbuild :build do |cmd|
+	cmd.solution = "#{SOLUTION}"
+	cmd.targets = [:Clean, :Build]
+	cmd.properties = {:Configuration =&gt; CONFIGURATION_OPT}
+end
+</code></pre>
+
+<p>Finally you can chain steps into rake tasks to make things easier:</p>
+
+<pre><code>task :test =&gt; [:build, :unittest] do
+end
+</code></pre>
+
+<p>Here is a <a href="https://github.com/netflakes/AzureManagement/blob/master/RakeFile">Sample</a> build <code>Rakefile</code> for a recent project of mine.</p>
+
+<p>The Albacore <a href="https://github.com/Albacore/albacore/wiki">Wiki</a> has all the detailed information to get started.  When it comes to doing up a build script for .NET - this is so much more fun than fiddling with XML descriptors etc.</p>
+
+<p>Enjoy!</p>
+
+	
+  	<div id="disqus_thread"></div>
+<script type="text/javascript">
+//<![CDATA[
+                  var disqus_shortname = 'code-netflakes';
+          
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+//]]>
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+	
+  </article>
+    <div class="article_footer">
+      <div class="tags">
+        Tags:
+        <a href="/tags/c/">c#</a>, <a href="/tags/ruby/">ruby</a>, <a href="/tags/albacore/">albacore</a>, <a href="/tags/build/">build</a>
+      </div>
+      <div class="timestamp">
+        2014-05-03
+      </div>
+      <div class='clear'></div>
+    </div>
+				
+      </section>
+	  
+      <footer>
+        <div class="col">
+          <h4>Recent Articles</h4>
+          <ol>
+              <li><a href="/jenkinstobuildruby/">JenkinsToBuildRuby</a> <span>Sep  9</span></li>
+              <li><a href="/tdd-with-nsubstitute/">tdd with nsubstitute</a> <span>May  5</span></li>
+              <li><a href="/building-with-albacore/">building c# with albacore</a> <span>May  3</span></li>
+              <li><a href="/working-with-tinyioc/">working with tinyioc</a> <span>May  2</span></li>
+              <li><a href="/building-net-with-albacore/">building .NET with albacore</a> <span>May  2</span></li>
+          </ol>
+        </div>
+        <div class="col">
+          <h4>Tags</h4>
+          <ol>
+              <li><a href="/tags/c/">c# (3)</a></li>
+              <li><a href="/tags/ruby/">ruby (1)</a></li>
+              <li><a href="/tags/build/">build (1)</a></li>
+              <li><a href="/tags/albacore/">albacore (1)</a></li>
+              <li><a href="/tags/tdd/">tdd (1)</a></li>
+              <li><a href="/tags/dependency-injection/">dependency-injection (1)</a></li>
+          </ol>
+        </div>
+        <p>Steve Forkin &mdash; <a href="mailto:steve@netflakes.org">steve@netflakes.org</a></p>
+      </footer>
+	  
+	  
+    </div>
+    <script src="../javascripts/scale.fix.js?1410311636" type="text/javascript"></script>
+    
+    
+    <script type="text/javascript">
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-10920982-2']);
+      _gaq.push(['_trackPageview']);
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+  </body>
+</html>
