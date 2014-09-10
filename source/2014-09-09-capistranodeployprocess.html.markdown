@@ -34,6 +34,8 @@ First up my CAPFILE: (the rvm1/capistrano3 gem works really well for dealing wit
 
 I use RVM and setting the correct ruby and gemset worked really well..
 
+The next set of code snippets are all from my config/deploy.rb
+
 	# - Configuration settings for the deployment process
 	#
 	set :rvm_ruby_version, 'ruby-2.1.1@sampleapi'
