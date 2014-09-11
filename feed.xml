@@ -14,7 +14,7 @@
     <link rel="alternate" href="http://blog.url.com/active-resource-token-auth/"/>
     <id>http://blog.url.com/active-resource-token-auth/</id>
     <published>2014-09-12T08:30:00+10:00</published>
-    <updated>2014-09-12T08:52:28+10:00</updated>
+    <updated>2014-09-12T09:07:09+10:00</updated>
     <author>
       <name>Article Author</name>
     </author>
@@ -22,18 +22,16 @@
 
 &lt;h4 id="active-resource-works-really-nicely-with-rest-api-from-rails"&gt;Active Resource works really nicely with Rest Api from Rails&lt;/h4&gt;
 
-&lt;p&gt;I am currently building a reasonably large web application that consumes several rest api based data sources. Each of these are integrated into the main application and joined by a company id that is guid based. Each api sits on the inside of the network at the moment but might not future growth. The system will authenticate with each api using random generated tokens. These are added to the request headers as well as the company id to ensure the correct scoping for each api call.&lt;/p&gt;
+&lt;p&gt;I am currently building a reasonably large web application that consumes several rest api based data sources. Each of these are integrated into the main application and joined by a company id that is guid based. The system authenticates with each api using random generated tokens. These are added to the request headers as well as the company id to ensure the correct scoping for each api call.&lt;/p&gt;
 
-&lt;p&gt;I have a base class for each of the services that requires authentication and here I set the auth token and the company id for each request. &lt;/p&gt;
+&lt;p&gt;Added a base class for each of the services that requires authentication and here I set the auth token and the company id for each request. &lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;module RestServices
   class ServiceBase &amp;lt; ActiveResource::Base
-
     cattr_reader :api_token, :company_id
     cattr_accessor :static_headers
-
     self.static_headers = headers
-
+	
     def self.headers
       # - override the headers to ensure we always have the request based/current ones
       new_headers = static_headers.clone
@@ -85,9 +83,9 @@ before_filter :enable_service_authenticator
 end  
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;One issue that I had with nginx is that by default it removes any custom headers that have an underscore in it - took me a while to figure this one out. Here is the (nginx docu on configuring custom headers)[http://nginx.org/en/docs/http/ngx_http_core_module.html#underscores_in_headers]&lt;/p&gt;
+&lt;p&gt;One issue that I had with nginx is that by default it removes any custom headers that have an underscore in it - took me a while to figure this one out. Here is the &lt;a href="http://nginx.org/en/docs/http/ngx_http_core_module.html#underscores_in_headers"&gt;nginx docu on configuring custom headers&lt;/a&gt;&lt;/p&gt;
 
-&lt;p&gt;After that I was all set with token auth against the rest api resources. The final piece was to add some rescue_from statements into the ApplicationController with relevant responses to gracefully handle connection issues.._&lt;/p&gt;
+&lt;p&gt;The final piece was to add some rescue_from statements into the ApplicationController with relevant responses to gracefully handle connection issues.._&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;# - Catch all situations where we called for a record that does not exist
 rescue_from ActiveResource::ResourceNotFound, :with =&amp;gt; :rescue_not_found

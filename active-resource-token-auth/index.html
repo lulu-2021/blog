@@ -37,18 +37,16 @@
 
 <h4 id="active-resource-works-really-nicely-with-rest-api-from-rails">Active Resource works really nicely with Rest Api from Rails</h4>
 
-<p>I am currently building a reasonably large web application that consumes several rest api based data sources. Each of these are integrated into the main application and joined by a company id that is guid based. Each api sits on the inside of the network at the moment but might not future growth. The system will authenticate with each api using random generated tokens. These are added to the request headers as well as the company id to ensure the correct scoping for each api call.</p>
+<p>I am currently building a reasonably large web application that consumes several rest api based data sources. Each of these are integrated into the main application and joined by a company id that is guid based. The system authenticates with each api using random generated tokens. These are added to the request headers as well as the company id to ensure the correct scoping for each api call.</p>
 
-<p>I have a base class for each of the services that requires authentication and here I set the auth token and the company id for each request. </p>
+<p>Added a base class for each of the services that requires authentication and here I set the auth token and the company id for each request. </p>
 
 <pre><code>module RestServices
   class ServiceBase &lt; ActiveResource::Base
-
     cattr_reader :api_token, :company_id
     cattr_accessor :static_headers
-
     self.static_headers = headers
-
+	
     def self.headers
       # - override the headers to ensure we always have the request based/current ones
       new_headers = static_headers.clone
@@ -100,9 +98,9 @@ before_filter :enable_service_authenticator
 end  
 </code></pre>
 
-<p>One issue that I had with nginx is that by default it removes any custom headers that have an underscore in it - took me a while to figure this one out. Here is the (nginx docu on configuring custom headers)[http://nginx.org/en/docs/http/ngx_http_core_module.html#underscores_in_headers]</p>
+<p>One issue that I had with nginx is that by default it removes any custom headers that have an underscore in it - took me a while to figure this one out. Here is the <a href="http://nginx.org/en/docs/http/ngx_http_core_module.html#underscores_in_headers">nginx docu on configuring custom headers</a></p>
 
-<p>After that I was all set with token auth against the rest api resources. The final piece was to add some rescue_from statements into the ApplicationController with relevant responses to gracefully handle connection issues.._</p>
+<p>The final piece was to add some rescue_from statements into the ApplicationController with relevant responses to gracefully handle connection issues.._</p>
 
 <pre><code># - Catch all situations where we called for a record that does not exist
 rescue_from ActiveResource::ResourceNotFound, :with =&gt; :rescue_not_found
