@@ -29,6 +29,90 @@
 
       <section>
         
+  <h2><a href="active-resource-token-auth/">active-resource-token-auth</a> <span>Sep 11</span></h2>
+  <!-- use article.summary(250) if you have Nokogiri available to show just
+       the first 250 characters -->
+  <h2 id="active-resource-token-auth-and-nginx">Active Resource, Token Auth and Nginx</h2>
+
+<h4 id="active-resource-works-really-nicely-with-rest-api-from-rails">Active Resource works really nicely with Rest Api from Rails</h4>
+
+<p>I am currently building a reasonably large web application that consumes several rest api based data sources. Each of these are integrated into the main application and joined by a company id that is guid based. Each api sits on the inside of the network at the moment but might not future growth. The system will authenticate with each api using random generated tokens. These are added to the request headers as well as the company id to ensure the correct scoping for each api call.</p>
+
+<p>I have a base class for each of the services that requires authentication and here I set the auth token and the company id for each request. </p>
+
+<pre><code>module RestServices
+  class ServiceBase &lt; ActiveResource::Base
+
+    cattr_reader :api_token, :company_id
+    cattr_accessor :static_headers
+
+    self.static_headers = headers
+
+    def self.headers
+      # - override the headers to ensure we always have the request based/current ones
+      new_headers = static_headers.clone
+      new_headers["Authorization"] = set_token_header
+      new_headers["company_id"] = set_company_header
+      new_headers
+    end  
+	
+    def self.set_token_header
+      "Token token=#{@@api_token}"  
+    end  
+	
+    def self.set_company_header
+      @@company_id.to_s
+    end  
+	
+    def self.authorise(token, company_id)
+      @@api_token = token
+      @@company_id = company_id
+      #
+      # - raise an appropriate error if we don't have the right credentials!
+      check_valid_authentication
+    end  
+	
+    private
+    def self.set_credentials?
+      check_api_token? &amp;&amp; check_company?
+    end
+	
+	# check_api_token AND check_company - business logic commented out here..
+    def self.check_valid_authentication
+      # - we should raise an error to be caught at the application level of the credentials have not been set to ensure service calls include a valid token in the header
+      raise ApplicationErrors::InvalidCredentialError unless set_credentials? 
+    end
+  end    
+end  
+</code></pre>
+
+<p>In each rest api controller you then just need a before filter to ensure the request headers are populated:</p>
+
+<pre><code>prepend_before_filter :require_login
+before_filter :enable_service_authenticator
+</code></pre>
+
+<p>And the authorise method: How you obtain the token and the company id etc.. is up to your business logic..</p>
+
+<pre><code>def enable_service_authenticator
+  Resource.authorise(resource_api_token, current_company.id)
+end  
+</code></pre>
+
+<p>One issue that I had with nginx is that by default it removes any custom headers that have an underscore in it - took me a while to figure this one out. Here is the (nginx docu on configuring custom headers)[http://nginx.org/en/docs/http/ngx_http_core_module.html#underscores_in_headers]</p>
+
+<p>After that I was all set with token auth against the rest api resources. The final piece was to add some rescue_from statements into the ApplicationController with relevant responses to gracefully handle connection issues.._</p>
+
+<pre><code># - Catch all situations where we called for a record that does not exist
+rescue_from ActiveResource::ResourceNotFound, :with =&gt; :rescue_not_found
+
+# - Catch all situations where the services api-s are down
+rescue_from Errno::ECONNREFUSED, :with =&gt; :rescue_service_unavailable
+</code></pre>
+
+<p>Enjoy!</p>
+
+
   <h2><a href="capistranodeployprocess/">CapistranoDeployProcess</a> <span>Sep  9</span></h2>
   <!-- use article.summary(250) if you have Nokogiri available to show just
        the first 250 characters -->
@@ -691,22 +775,22 @@ end
         <div class="col">
           <h4>Recent Articles</h4>
           <ol>
+              <li><a href="/active-resource-token-auth/">active-resource-token-auth</a> <span>Sep 11</span></li>
               <li><a href="/capistranodeployprocess/">CapistranoDeployProcess</a> <span>Sep  9</span></li>
               <li><a href="/jenkinstobuildruby/">JenkinsToBuildRuby</a> <span>Sep  9</span></li>
               <li><a href="/tdd-with-nsubstitute/">tdd with nsubstitute</a> <span>May  5</span></li>
               <li><a href="/building-with-albacore/">building c# with albacore</a> <span>May  3</span></li>
-              <li><a href="/working-with-tinyioc/">working with tinyioc</a> <span>May  2</span></li>
           </ol>
         </div>
         <div class="col">
           <h4>Tags</h4>
           <ol>
+              <li><a href="/tags/ruby/">ruby (4)</a></li>
               <li><a href="/tags/c/">c# (3)</a></li>
-              <li><a href="/tags/ruby/">ruby (3)</a></li>
-              <li><a href="/tags/build/">build (1)</a></li>
-              <li><a href="/tags/capistrano/">capistrano (1)</a></li>
-              <li><a href="/tags/mock/">mock (1)</a></li>
               <li><a href="/tags/tdd/">tdd (1)</a></li>
+              <li><a href="/tags/continuous-integration/">continuous integration (1)</a></li>
+              <li><a href="/tags/jenkins/">jenkins (1)</a></li>
+              <li><a href="/tags/unicorn/">unicorn (1)</a></li>
           </ol>
         </div>
         <p>Steve Forkin &mdash; <a href="mailto:steve@netflakes.org">steve@netflakes.org</a></p>

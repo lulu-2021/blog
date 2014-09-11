@@ -1,0 +1,189 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv='X-UA-Compatible' content='IE=edge;chrome=1' />
+
+    <title>active-resource-token-auth</title>
+	
+    <link href='http://fonts.googleapis.com/css?family=Droid+Serif:400,700|Open+Sans:400,700' rel='stylesheet' type='text/css'>
+    <link href="../stylesheets/all.css?1410311636" rel="stylesheet" type="text/css" />
+    <script src="../javascripts/all.js?1410311636" type="text/javascript"></script>
+	
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link rel="alternate" type="application/rss+xml"  href="/feed.xml" title="Netflakes - Steve Forkin">
+
+  </head>
+  <body>
+
+    <div class="wrapper">
+
+      <header>
+        <h1><a href="/">Netflakes</a></h1>
+		<h4>Ruby is Fun..</h4>
+        by <a href="mailto:steve@netflakes.org">Steve Forkin</a>
+      </header>
+
+      <section>
+          <h2>
+    <a href="/active-resource-token-auth/">active-resource-token-auth</a>
+  </h2>
+  <time datetime="2014-09-11" pubdate>Sep 11, 2014</time>
+  <article>
+    <h2 id="active-resource-token-auth-and-nginx">Active Resource, Token Auth and Nginx</h2>
+
+<h4 id="active-resource-works-really-nicely-with-rest-api-from-rails">Active Resource works really nicely with Rest Api from Rails</h4>
+
+<p>I am currently building a reasonably large web application that consumes several rest api based data sources. Each of these are integrated into the main application and joined by a company id that is guid based. Each api sits on the inside of the network at the moment but might not future growth. The system will authenticate with each api using random generated tokens. These are added to the request headers as well as the company id to ensure the correct scoping for each api call.</p>
+
+<p>I have a base class for each of the services that requires authentication and here I set the auth token and the company id for each request. </p>
+
+<pre><code>module RestServices
+  class ServiceBase &lt; ActiveResource::Base
+
+    cattr_reader :api_token, :company_id
+    cattr_accessor :static_headers
+
+    self.static_headers = headers
+
+    def self.headers
+      # - override the headers to ensure we always have the request based/current ones
+      new_headers = static_headers.clone
+      new_headers["Authorization"] = set_token_header
+      new_headers["company_id"] = set_company_header
+      new_headers
+    end  
+	
+    def self.set_token_header
+      "Token token=#{@@api_token}"  
+    end  
+	
+    def self.set_company_header
+      @@company_id.to_s
+    end  
+	
+    def self.authorise(token, company_id)
+      @@api_token = token
+      @@company_id = company_id
+      #
+      # - raise an appropriate error if we don't have the right credentials!
+      check_valid_authentication
+    end  
+	
+    private
+    def self.set_credentials?
+      check_api_token? &amp;&amp; check_company?
+    end
+	
+	# check_api_token AND check_company - business logic commented out here..
+    def self.check_valid_authentication
+      # - we should raise an error to be caught at the application level of the credentials have not been set to ensure service calls include a valid token in the header
+      raise ApplicationErrors::InvalidCredentialError unless set_credentials? 
+    end
+  end    
+end  
+</code></pre>
+
+<p>In each rest api controller you then just need a before filter to ensure the request headers are populated:</p>
+
+<pre><code>prepend_before_filter :require_login
+before_filter :enable_service_authenticator
+</code></pre>
+
+<p>And the authorise method: How you obtain the token and the company id etc.. is up to your business logic..</p>
+
+<pre><code>def enable_service_authenticator
+  Resource.authorise(resource_api_token, current_company.id)
+end  
+</code></pre>
+
+<p>One issue that I had with nginx is that by default it removes any custom headers that have an underscore in it - took me a while to figure this one out. Here is the (nginx docu on configuring custom headers)[http://nginx.org/en/docs/http/ngx_http_core_module.html#underscores_in_headers]</p>
+
+<p>After that I was all set with token auth against the rest api resources. The final piece was to add some rescue_from statements into the ApplicationController with relevant responses to gracefully handle connection issues.._</p>
+
+<pre><code># - Catch all situations where we called for a record that does not exist
+rescue_from ActiveResource::ResourceNotFound, :with =&gt; :rescue_not_found
+
+# - Catch all situations where the services api-s are down
+rescue_from Errno::ECONNREFUSED, :with =&gt; :rescue_service_unavailable
+</code></pre>
+
+<p>Enjoy!</p>
+
+
+	
+  	<div id="disqus_thread"></div>
+<script type="text/javascript">
+//<![CDATA[
+                  var disqus_shortname = 'code-netflakes';
+          
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+//]]>
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+	
+  </article>
+    <div class="article_footer">
+      <div class="tags">
+        Tags:
+        <a href="/tags/ruby/">ruby</a>, <a href="/tags/active-resource/">active-resource</a>, <a href="/tags/token-authentication/">token-authentication</a>, <a href="/tags/ngnix/">ngnix</a>
+      </div>
+      <div class="timestamp">
+        2014-09-11
+      </div>
+      <div class='clear'></div>
+    </div>
+				
+      </section>
+	  
+      <footer>
+        <div class="col">
+          <h4>Recent Articles</h4>
+          <ol>
+              <li><a href="/active-resource-token-auth/">active-resource-token-auth</a> <span>Sep 11</span></li>
+              <li><a href="/capistranodeployprocess/">CapistranoDeployProcess</a> <span>Sep  9</span></li>
+              <li><a href="/jenkinstobuildruby/">JenkinsToBuildRuby</a> <span>Sep  9</span></li>
+              <li><a href="/tdd-with-nsubstitute/">tdd with nsubstitute</a> <span>May  5</span></li>
+              <li><a href="/building-with-albacore/">building c# with albacore</a> <span>May  3</span></li>
+          </ol>
+        </div>
+        <div class="col">
+          <h4>Tags</h4>
+          <ol>
+              <li><a href="/tags/ruby/">ruby (4)</a></li>
+              <li><a href="/tags/c/">c# (3)</a></li>
+              <li><a href="/tags/tdd/">tdd (1)</a></li>
+              <li><a href="/tags/continuous-integration/">continuous integration (1)</a></li>
+              <li><a href="/tags/jenkins/">jenkins (1)</a></li>
+              <li><a href="/tags/unicorn/">unicorn (1)</a></li>
+          </ol>
+        </div>
+        <p>Steve Forkin &mdash; <a href="mailto:steve@netflakes.org">steve@netflakes.org</a></p>
+      </footer>
+	  
+	  
+    </div>
+    <script src="../javascripts/scale.fix.js?1410311636" type="text/javascript"></script>
+    
+    
+    <script type="text/javascript">
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-10920982-2']);
+      _gaq.push(['_trackPageview']);
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+  </body>
+</html>

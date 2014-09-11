@@ -5,10 +5,101 @@
   <id>http://blog.url.com/</id>
   <link href="http://blog.url.com/"/>
   <link href="http://blog.url.com/feed.xml" rel="self"/>
-  <updated>2014-09-10T11:59:00+10:00</updated>
+  <updated>2014-09-12T08:30:00+10:00</updated>
   <author>
     <name>Blog Author</name>
   </author>
+  <entry>
+    <title>active-resource-token-auth</title>
+    <link rel="alternate" href="http://blog.url.com/active-resource-token-auth/"/>
+    <id>http://blog.url.com/active-resource-token-auth/</id>
+    <published>2014-09-12T08:30:00+10:00</published>
+    <updated>2014-09-12T08:52:28+10:00</updated>
+    <author>
+      <name>Article Author</name>
+    </author>
+    <content type="html">&lt;h2 id="active-resource-token-auth-and-nginx"&gt;Active Resource, Token Auth and Nginx&lt;/h2&gt;
+
+&lt;h4 id="active-resource-works-really-nicely-with-rest-api-from-rails"&gt;Active Resource works really nicely with Rest Api from Rails&lt;/h4&gt;
+
+&lt;p&gt;I am currently building a reasonably large web application that consumes several rest api based data sources. Each of these are integrated into the main application and joined by a company id that is guid based. Each api sits on the inside of the network at the moment but might not future growth. The system will authenticate with each api using random generated tokens. These are added to the request headers as well as the company id to ensure the correct scoping for each api call.&lt;/p&gt;
+
+&lt;p&gt;I have a base class for each of the services that requires authentication and here I set the auth token and the company id for each request. &lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;module RestServices
+  class ServiceBase &amp;lt; ActiveResource::Base
+
+    cattr_reader :api_token, :company_id
+    cattr_accessor :static_headers
+
+    self.static_headers = headers
+
+    def self.headers
+      # - override the headers to ensure we always have the request based/current ones
+      new_headers = static_headers.clone
+      new_headers["Authorization"] = set_token_header
+      new_headers["company_id"] = set_company_header
+      new_headers
+    end  
+	
+    def self.set_token_header
+      "Token token=#{@@api_token}"  
+    end  
+	
+    def self.set_company_header
+      @@company_id.to_s
+    end  
+	
+    def self.authorise(token, company_id)
+      @@api_token = token
+      @@company_id = company_id
+      #
+      # - raise an appropriate error if we don't have the right credentials!
+      check_valid_authentication
+    end  
+	
+    private
+    def self.set_credentials?
+      check_api_token? &amp;amp;&amp;amp; check_company?
+    end
+	
+	# check_api_token AND check_company - business logic commented out here..
+    def self.check_valid_authentication
+      # - we should raise an error to be caught at the application level of the credentials have not been set to ensure service calls include a valid token in the header
+      raise ApplicationErrors::InvalidCredentialError unless set_credentials? 
+    end
+  end    
+end  
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;In each rest api controller you then just need a before filter to ensure the request headers are populated:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;prepend_before_filter :require_login
+before_filter :enable_service_authenticator
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;And the authorise method: How you obtain the token and the company id etc.. is up to your business logic..&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;def enable_service_authenticator
+  Resource.authorise(resource_api_token, current_company.id)
+end  
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;One issue that I had with nginx is that by default it removes any custom headers that have an underscore in it - took me a while to figure this one out. Here is the (nginx docu on configuring custom headers)[http://nginx.org/en/docs/http/ngx_http_core_module.html#underscores_in_headers]&lt;/p&gt;
+
+&lt;p&gt;After that I was all set with token auth against the rest api resources. The final piece was to add some rescue_from statements into the ApplicationController with relevant responses to gracefully handle connection issues.._&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;# - Catch all situations where we called for a record that does not exist
+rescue_from ActiveResource::ResourceNotFound, :with =&amp;gt; :rescue_not_found
+
+# - Catch all situations where the services api-s are down
+rescue_from Errno::ECONNREFUSED, :with =&amp;gt; :rescue_service_unavailable
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Enjoy!&lt;/p&gt;
+
+</content>
+  </entry>
   <entry>
     <title>CapistranoDeployProcess</title>
     <link rel="alternate" href="http://blog.url.com/capistranodeployprocess/"/>
@@ -593,95 +684,6 @@ telling the IoC container to fire up a &lt;code&gt;singleton&lt;/code&gt; based 
 &lt;p&gt;Following on from this theme - my next step with this library will be implement local storage and reporting processes that will also be injected at startup so that they can be swapped out and also developed independantly of changes made to the library that is providing the data.&lt;/p&gt;
 
 &lt;p&gt;More to follow soon.&lt;/p&gt;
-</content>
-  </entry>
-  <entry>
-    <title>building .NET with albacore</title>
-    <link rel="alternate" href="http://blog.url.com/building-net-with-albacore/"/>
-    <id>http://blog.url.com/building-net-with-albacore/</id>
-    <published>2014-05-03T10:24:00+10:00</published>
-    <updated>2014-09-10T11:11:59+10:00</updated>
-    <author>
-      <name>Article Author</name>
-    </author>
-    <content type="html">&lt;h2 id="albacore-fun-and-easy-build-tool-for-net"&gt;Albacore, fun and easy build tool for .NET&lt;/h2&gt;
-
-&lt;h4 id="xml-ms-build-and-the-likes-are-no-fun-whereas-albacores-ruby-dsl-makes-for-a-great-build-tool-for-net-projects"&gt;xml, ms build and the likes are no fun whereas Albacore's ruby dsl makes for a great build tool for .NET projects&lt;/h4&gt;
-
-&lt;p&gt;Over the last 2 years I have been doing more work with Ruby, Rails when it comes to building web apps and also building some
-infrastructure automation in my day time job using &lt;a href="http://www.getchef.com/chef/"&gt;chef&lt;/a&gt;. Since I am not a huge fan of XML and
-avoid it when possible, I came accross &lt;a href="http://albacorebuild.net/"&gt;Albacore&lt;/a&gt; - which is a suite of &lt;a href="http://rake.rubyforge.org/"&gt;Rake&lt;/a&gt;
-tasks with a nice DSL to very quickly put together build scripts for .NET projects. Even if you are not a seasoned Ruby developer
-the amount of Ruby required to complete the build related tasks for .NET in Albacore is learned really quickly.&lt;/p&gt;
-
-&lt;p&gt;The basic requirement to get started with Albacore is to install Ruby. Windows support for Ruby is getting better. Most of my usual
-Ruby dev work is done in OSX and I use RVM to be able to have project based versioning on the Ruby side, you can't go passed this one.. There is a somewhat more limited third party tool called &lt;a href="https://github.com/vertiginous/pik"&gt;Pik&lt;/a&gt; which does all you need to get started with building .NET with Ruby.&lt;/p&gt;
-
-&lt;p&gt;Create a &lt;code&gt;Gemfile&lt;/code&gt; in the root of the project like this sample here:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt; source 'https://rubygems.org'
-
- gem 'albacore', '0.3.5'
- gem 'rubyzip', '0.9.9'
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;Run &lt;code&gt;bundle&lt;/code&gt; or &lt;code&gt;bundle install&lt;/code&gt; to get the relevant gems installed. I had some issues with newer versions of the Albacore gem.&lt;/p&gt;
-
-&lt;p&gt;Then create a &lt;code&gt;Rakefile&lt;/code&gt; in the root of your project which has all the build, test and publish related steps in it.&lt;/p&gt;
-
-&lt;p&gt;At the start of the build script - you will typically configure the environment related stuff:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;#
-ENVIRONMENT = "Debug"
-#ENVIRONMENT = "Release"
-#
-BUILD_VERSION = 1001
-BUILD_DIR = "build"
-SOLUTION_NAME = "ManageAzure"
-PUBLISH_BASE = "c:/publish"
-PUBLISH_DIR = "#{PUBLISH_BASE}/#{SOLUTION_NAME}"
-SOLUTION = "#{SOLUTION_NAME}.sln"
-PROJECT_DIR = "ManageAzure"
-CONFIGURATION_OPT = "Debug"
-#CONFIGURATION_OPT = "Release"
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;Since I also use xunit for my unit tests in C# projects - you will need to configure the runner..&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;#
-XUNIT_CONSOLE = "./Packages/xunit.1.9.2.runner/xunit.console.clr4.exe"
-UNIT_TEST_PROJECT = "ManageAzureTests"
-UNIT_TEST_ASSEMBLY = "./#{UNIT_TEST_PROJECT}/bin/#{ENVIRONMENT}/#{UNIT_TEST_PROJECT}.dll"
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;Then the actual &lt;code&gt;build&lt;/code&gt; and &lt;code&gt;test&lt;/code&gt; steps are really simple Ruby code blocks:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;#
-desc "Run All Unit Tests"
-xunit :unittest do |xunit|
-    xunit.command = XUNIT_CONSOLE
-    xunit.assembly = UNIT_TEST_ASSEMBLY
-end
-#
-desc "Run the build step - in this case clean and build"
-msbuild :build do |cmd|
-	cmd.solution = "#{SOLUTION}"
-	cmd.targets = [:Clean, :Build]
-	cmd.properties = {:Configuration =&amp;gt; CONFIGURATION_OPT}
-end
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;Finally you can chain steps into rake tasks to make things easier:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;task :test =&amp;gt; [:build, :unittest] do
-end
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;Here is a &lt;a href="https://github.com/netflakes/AzureManagement/blob/master/RakeFile"&gt;Sample&lt;/a&gt; build &lt;code&gt;Rakefile&lt;/code&gt; for a recent project of mine.&lt;/p&gt;
-
-&lt;p&gt;The Albacore &lt;a href="https://github.com/Albacore/albacore/wiki"&gt;Wiki&lt;/a&gt; has all the detailed information to get started.  When it comes to doing up a build script for .NET - this is so much more fun than fiddling with XML descriptors etc.&lt;/p&gt;
-
-&lt;p&gt;Enjoy!&lt;/p&gt;
 </content>
   </entry>
 </feed>
