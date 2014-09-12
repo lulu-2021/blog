@@ -26,7 +26,11 @@ activate :blog do |blog|
   blog.paginate = true
   # blog.per_page = 10
   # blog.page_link = "page/:num"
+  #
 end
+
+# - add a sitemap to the blog so Google can find it..
+activate :sitemap, :gzip => false, :hostname => "http://code.netflakes.org"
 
 activate :disqus do |d|
   d.shortname = "code-netflakes"
